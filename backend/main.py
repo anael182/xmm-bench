@@ -1,9 +1,14 @@
 from fastapi import FastAPI
-from fastapi.openapi.models import Response
+from pydantic import BaseModel
 
 from fastapi.responses import FileResponse
 
 app = FastAPI()
+
+
+class Response(BaseModel):
+    message: str
+    statut: bool
 
 
 @app.get("/")
