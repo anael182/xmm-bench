@@ -1,9 +1,12 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
+from starlette.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
+
+origins = ["*"]
 
 
 class Response(BaseModel):
@@ -13,7 +16,7 @@ class Response(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"message": "Hello World"}
 
 
 @app.get("/webcam")
@@ -29,4 +32,6 @@ def toggle_relay(name):
     print(f"Je toggle {name}")
     Response.message = "ok"
     return Response.message
+
+
 
