@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -19,6 +20,11 @@ app.add_middleware(
 class Response(BaseModel):
     message: str
     status: bool
+
+
+class User(BaseModel):
+    username: str
+    isConnected: bool
 
 
 @app.get("/")
