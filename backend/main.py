@@ -42,3 +42,5 @@ def toggle_relay(name: str):
     print(f"Je toggle {name}")
     r = Response(message="ok", status=True)
     return r
+
+

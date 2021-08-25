@@ -1,7 +1,7 @@
 import axios from "axios";
 import {Button} from "@material-ui/core";
 import {makeStyles, createStyles, Theme} from '@material-ui/core/styles';
-import {URL_API} from "./react-app-env.d";
+
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -18,9 +18,9 @@ export default function RelayButtons() {
     const classes = useStyles();
 
     const getRelay = (e: any): void => {
-        axios.post(URL_API + 'relay/' + e.target.offsetParent.title)
+        axios.post(process.env.React_App_URL_API + 'relay/' + e.target.offsetParent.title)
             .catch(err => console.error("Post request ==> " + err));
-        console.log(e)
+        //console.log(e)
     }
 
     return (
