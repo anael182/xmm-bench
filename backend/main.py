@@ -18,7 +18,7 @@ app.add_middleware(
 
 class Response(BaseModel):
     message: str
-    statut: bool
+    status: bool
 
 
 @app.get("/")
@@ -40,5 +40,5 @@ async def webcam():
 # http://127.0.0.1:8000/relay/
 def toggle_relay(name: str):
     print(f"Je toggle {name}")
-    Response.message = "ok"
-    return Response.message
+    r = Response(message="ok", status=True)
+    return r

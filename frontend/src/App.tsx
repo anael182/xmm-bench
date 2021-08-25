@@ -1,6 +1,6 @@
 import './App.css';
-import Webcam from "./Webcam.tsx";
-import RelayButtons from './RelayButtons.tsx';
+import Webcam from "./Webcam";
+import RelayButtons from './RelayButtons';
 
 function App() {
     return (
