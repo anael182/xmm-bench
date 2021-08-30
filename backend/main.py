@@ -8,6 +8,7 @@ from pydantic.class_validators import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
+
 SECRET_KEY = "d6921da7ace856ad4fd9119045d294336021181d3a411f9e8498bbaae335cb77"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -52,6 +53,7 @@ class User(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    expires_in: str
 
 
 class TokenData(BaseModel):
@@ -148,7 +150,8 @@ def toggle_relay(name: str):
     return r
 
 
-@app.post("/reservation/take", response_model=Token)
+# Remettre /reservation/take des que probleme reglé
+@app.post("/reservation/take/", response_model=Token)
 # http://127.0.0.1:8000/reservation/take
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
@@ -162,18 +165,17 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
+    now = datetime.now()
+    token_expire = now + access_token_expires
     print("user connected = "+user.username.capitalize())
-    print("token = " + access_token)
-    return {"access_token": access_token, "token_type": "bearer"}
+    print("Token date_time = " + str(now.strftime("%d/%m/%Y %H:%M:%S")))
+    print("Token expires_in = " + str(token_expire.strftime("%d/%m/%Y %H:%M:%S")))
+    print("Token = " + access_token)
+    return {"access_token": access_token, "token_type": "bearer", "expires_in": str(token_expire.strftime("%d/%m/%Y %H:%M:%S"))}
 
 
 @app.get("/reservation/state")
 # http://127.0.0.1:8000/reservation/state
 async def get_token(token: str = Depends(oauth2_scheme), current_user: User = Depends(get_current_active_user)):
-    return {"Username": current_user, "token": token}
+    return {"Username": current_user.username, "token": token}
 
-
-@app.get("/users/me")
-# http://127.0.0.1:8000//users/me
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user

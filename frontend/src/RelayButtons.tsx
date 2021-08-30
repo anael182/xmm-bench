@@ -3,6 +3,8 @@ import {Button} from "@material-ui/core";
 import {makeStyles, createStyles, Theme} from '@material-ui/core/styles';
 
 
+// Création du CSS des boutons sur Material UI
+
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
