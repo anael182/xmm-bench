@@ -1,4 +1,3 @@
-import './App.css';
 import Webcam from "./Webcam";
 import RelayButtons from './RelayButtons';
 import Login from "./Login";
