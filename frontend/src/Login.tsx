@@ -17,44 +17,65 @@ import axios from "axios";
     }),
 );*/
 
+
 export default class Login extends React.Component <any, any>{
 
     constructor(props: any){
         super(props);
         this.state={
-            username: "Personne n'"
-        }
+            username: "",
+            input: ""
+        };
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.updateInput = this.updateInput.bind(this);
     }
 
-
-    handleChange(e: any){
+    updateInput(e: any){
         this.setState({username: e.target.value});
     }
 
+    handleSubmit(e: any) {
+        e.preventDefault();
+        this.setState({username: this.state.input});
+    }
 
-    handleLogin = () : void => {
-        axios({method: 'post', url: process.env.React_App_URL_API + 'reservation/take', data: {username: this.state.username}})
-            .then(res => console.log(res))
-            .catch(err => console.error("ERROR =>" + err));
+
+    handleLogin = (e: any) : void => {
+        if (this.state.username !== "") {
+            axios({
+                method: 'post',
+                url: process.env.React_App_URL_API + 'reservation/take',
+                data: {username: this.state.username}
+            })
+                .then(res => res.data.username)
+                .catch(err => console.error("ERROR =>" + err));
+        }
     }
 
     handleCurrentUser = (): any => {
-        const data = axios.get(process.env.React_App_URL_API + "reservation/state")
-            .then(res => res.data.token.username);
-        this.setState({username: data});
+        axios.post(process.env.React_App_URL_API + "reservation/release")
+            .then( () =>console.log("Token released"))
+            .catch(err => console.error("ERROR => " + err));
     }
 
         render() {
+            const isLoggedIn = this.state.username;
             return (
-                <div>
-                    <FormControl>
+                    <FormControl onSubmit={this.handleSubmit}>
                         <InputLabel required={true} htmlFor="my-input">Username</InputLabel>
                         {/*https://stackoverflow.com/questions/46799872/using-react-form-to-post-to-an-api*/}
-                        <Input id="username" name="username" autoFocus={true} onSubmit={this.handleChange.bind(this)} aria-describedby="my-helper-text"/>
-                        <Button variant="contained" color="primary" onClick={this.handleLogin.bind(this)}>Take Token</Button>
-                        <FormHelperText id="my-helper-text"> {this.state.username} est actuellement connecté </FormHelperText>
+                        <Input type="text" name="username" autoFocus={true} onChange={this.updateInput} aria-describedby="my-helper-text"/>
+                        {(isLoggedIn === "")
+                            ? <div>
+                                <Button variant="contained" color="primary" onClick={this.handleLogin.bind(this)}>Take Token</Button>
+                            </div>
+                            : <div>
+                                <Button variant="contained" color="primary" onClick={this.handleLogin.bind(this)}>Take Token</Button>
+                                <Button variant="contained" color="primary" onClick={this.handleCurrentUser}>Release Token</Button>
+                                <FormHelperText id="my-helper-text"> {this.state.username} connected</FormHelperText>
+                            </div>
+                        }
                     </FormControl>
-                </div>
             )
         }
 }

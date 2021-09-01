@@ -28,7 +28,7 @@ class User(BaseModel):
 
 
 class Token(BaseModel):
-    creation_date: str
+    token_creation_date: str
     username: Optional[str] = None
 
 
@@ -65,7 +65,7 @@ def create_access_token(user: User, response: Response):
     global token
     now = datetime.now()
     if token is None:
-        token = Token(access_token="im_the_token", creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")), username=user.username)
+        token = Token(access_token="im_the_token", token_creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")), username=user.username)
         print("Creation du token : "+str(token))
         return token
     else:
@@ -87,12 +87,12 @@ def release_token(response: Response):
     global token
     if token is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
-        r = StatusResponse(message="Token is already free", status=True)
+        r = StatusResponse(message="Token is already free", status=False)
         return r
     else:
         print("Last user => " + token.username)
         token = None
-        r = StatusResponse(message="Token released", status=False)
+        r = StatusResponse(message="Token released", status=True)
         return r
 
 
