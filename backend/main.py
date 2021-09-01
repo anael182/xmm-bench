@@ -69,7 +69,7 @@ def create_access_token(user: User):
         print("Creation du token : "+str(token))
         return token
     else:
-        r = Response(message="HTTP 409 - Token is already taken by " + token.username, status=True)
+        r = Response(message="Token is already taken by " + token.username, status=True)
         return r
 
 
@@ -85,7 +85,7 @@ async def token_state():
 def release_token():
     global token
     if token is None:
-        r = Response(message="Token already free", status=True)
+        r = Response(message="Token is already free", status=True)
         return r
     else:
         print("Last user =>" + token.username)
