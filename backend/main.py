@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 
-class Response(BaseModel):
+class StatusResponse(BaseModel):
     message: str
     status: bool
 
@@ -54,14 +54,14 @@ async def webcam():
 # http://127.0.0.1:8000/relay/
 def toggle_relay(name: str):
     print(f"Je toggle {name}")
-    r = Response(message="ok", status=True)
+    r = StatusResponse(message="ok", status=True)
     return r
 
 
 @app.post("/reservation/take")
 # http://127.0.0.1:8000/reservation/take
 # JSON INPUT EXAMPLE {"username" : "Johndoe"}
-def create_access_token(user: User):
+def create_access_token(user: User, response: Response):
     global token
     now = datetime.now()
     if token is None:
@@ -69,7 +69,8 @@ def create_access_token(user: User):
         print("Creation du token : "+str(token))
         return token
     else:
-        r = Response(message="Token is already taken by " + token.username, status=True)
+        response.status_code = status.HTTP_409_CONFLICT
+        r = StatusResponse(message="Token is already taken by " + token.username, status=False)
         return r
 
 
@@ -82,15 +83,16 @@ async def token_state():
 
 @app.post("/reservation/release")
 # http://127.0.0.1:8000reservation/release
-def release_token():
+def release_token(response: Response):
     global token
     if token is None:
-        r = Response(message="Token is already free", status=True)
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        r = StatusResponse(message="Token is already free", status=True)
         return r
     else:
-        print("Last user =>" + token.username)
+        print("Last user => " + token.username)
         token = None
-        r = Response(message="Token released", status=True)
+        r = StatusResponse(message="Token released", status=False)
         return r
 
 
