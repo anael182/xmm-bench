@@ -31,12 +31,11 @@ class User(BaseModel):
 
 
 class Token(BaseModel):
-    access_token: str
     creation_date: str
     username: Optional[str] = None
 
 
-token = Token
+token = None
 
 
 @app.get("/")
@@ -68,22 +67,37 @@ def toggle_relay(name: str):
 def create_access_token(user: User):
     global token
     now = datetime.now()
-    token = Token(access_token="im_the_token", creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")), username=user.username)
-    print("Creation du token : "+str(token))
-    return {"username": token.username, "token": token.access_token, "creation_date": token.creation_date}
+    if token is None:
+        token = Token(access_token="im_the_token", creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")), username=user.username)
+        print("Creation du token : "+str(token))
+        return token
+    else:
+        r = Response(message="HTTP 409 - Token is already taken by " + token.username, status=True)
+        return r
 
 
 @app.get("/reservation/state")
 # http://127.0.0.1:8000/reservation/state
 async def token_state():
     global token
-    return {"username": token.username, "token": token}
+    if token is None:
+        r = Response(message="Token is free", status=True)
+        return r
+    else:
+        return token
 
 
 @app.post("/reservation/release")
 # http://127.0.0.1:8000reservation/release
-def release_token(user: User):
+def release_token():
     global token
-    token = None
-    print("Last user =>" + user.username)
+    if token is None:
+        r = Response(message="HTTP 400 - Bad Request", status=True)
+        return r
+    else:
+        print("Last user =>" + token.username)
+        token = None
+        r = Response(message="Token released", status=True)
+        return r
+
 
