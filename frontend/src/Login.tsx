@@ -41,7 +41,7 @@ export default class Login extends React.Component <any, any>{
     handleCurrentUser = (): any => {
         const data = axios.get(process.env.React_App_URL_API + "reservation/state")
             .then(res => res.data.token.username);
-        return data;
+        this.setState({username: data});
     }
 
         render() {
@@ -52,7 +52,7 @@ export default class Login extends React.Component <any, any>{
                         {/*https://stackoverflow.com/questions/46799872/using-react-form-to-post-to-an-api*/}
                         <Input id="username" name="username" autoFocus={true} onSubmit={this.handleChange.bind(this)} aria-describedby="my-helper-text"/>
                         <Button variant="contained" color="primary" onClick={this.handleLogin.bind(this)}>Take Token</Button>
-                        <FormHelperText id="my-helper-text"> {this.state.username}est actuellement connecté </FormHelperText>
+                        <FormHelperText id="my-helper-text"> {this.state.username} est actuellement connecté </FormHelperText>
                     </FormControl>
                 </div>
             )

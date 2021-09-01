@@ -4,11 +4,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
 
 app = FastAPI()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = ["*"]
 
@@ -80,11 +77,7 @@ def create_access_token(user: User):
 # http://127.0.0.1:8000/reservation/state
 async def token_state():
     global token
-    if token is None:
-        r = Response(message="Token is free", status=True)
-        return r
-    else:
-        return token
+    return token
 
 
 @app.post("/reservation/release")
@@ -92,7 +85,7 @@ async def token_state():
 def release_token():
     global token
     if token is None:
-        r = Response(message="HTTP 400 - Bad Request", status=True)
+        r = Response(message="Token already free", status=True)
         return r
     else:
         print("Last user =>" + token.username)
