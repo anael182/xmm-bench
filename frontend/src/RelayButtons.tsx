@@ -1,11 +1,9 @@
 import axios from "axios";
 import {Button} from "@material-ui/core";
 import {makeStyles, createStyles, Theme} from '@material-ui/core/styles';
-import {useEffect} from "react";
 
 
 // Création du CSS des boutons sur Material UI
-
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
@@ -17,20 +15,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 
-
 export default function RelayButtons() {
-
-    let state = {
-        username: null
-    }
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            axios.get(process.env.React_App_URL_API + "reservation/state")
-                .catch(err => console.error(err));
-        }, 10000);
-    },
-        []);
 
     const classes = useStyles();
 
