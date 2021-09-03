@@ -1,9 +1,10 @@
+import {Grid} from "@material-ui/core";
 
 export default function RelayButtons() {
 
     return (
-        <div>
-            <img src={process.env.React_App_URL_API+'webcam'} alt="webcam"/>
-        </div>
+        <Grid container justifyContent = "center">
+        <img src={process.env.React_App_URL_API+'webcam'} alt="webcam"/>
+        </Grid>
     )
 }

@@ -1,5 +1,5 @@
 import React from 'react'
-import {Button, FormControl} from '@material-ui/core';
+import {Button, FormControl, Grid} from '@material-ui/core';
 import axios from "axios";
 
 
@@ -15,10 +15,10 @@ export default function ReleaseToken() {
     }
 
     return (
-        <div>
+        <Grid container justifyContent = "center">
             <FormControl onSubmit={handleRelease}>
             <Button variant="contained" color="primary" onClick={handleRelease}>Release Token</Button>
             </FormControl>
-        </div>
+        </Grid>
     )
 }
