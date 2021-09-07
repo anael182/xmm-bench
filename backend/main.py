@@ -45,7 +45,6 @@ def read_root():
 # http://127.0.0.1:8000/webcam/
 async def webcam():
     print("/webcam")
-    print("J'allume la caméra")
     image_webcam = FileResponse("./images/image.jpeg")
     return image_webcam
 
@@ -94,5 +93,3 @@ def release_token(response: Response):
         token = None
         r = StatusResponse(message="Token released", status=True)
         return r
-
-

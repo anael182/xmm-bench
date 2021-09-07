@@ -1,9 +1,9 @@
-import {Button, Grid, Input, InputLabel} from '@material-ui/core';
+import {Button, Grid, Input, InputLabel, PropTypes} from '@material-ui/core';
 import axios from "axios";
 import {makeStyles, createStyles, Theme} from '@material-ui/core/styles';
 
 
-// Création du CSS des boutons sur Material UI
+// Material UI components CSS
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
@@ -14,11 +14,9 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-
-export default function TakeToken() {
+export default function TakeToken(props: any) {
 
     const classes = useStyles();
-
 
     const handleSubmit = (e: any) => {
             e.preventDefault();
@@ -28,7 +26,10 @@ export default function TakeToken() {
                     url: process.env.React_App_URL_API + 'reservation/take',
                     data: {username: e.target.elements.username.value}
                 })
-                    .then(() => console.log(e.target.elements.username.value))
+                    .then(() => {
+                        console.log(e.target.elements.username.value);
+                        props.refresh();
+                    })
                     .catch(err => console.error("ERROR =>" + err));
             }
     }
