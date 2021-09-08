@@ -24,8 +24,7 @@ export default function TakeToken (props: LoginProps): ReactElement {
     const classes = useStyles();
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
-        console.log(e.currentTarget.username.value);
-            e.preventDefault();
+        e.preventDefault();
             if (e.currentTarget.username.value !== "") {
                 axios({
                     method: 'post',
