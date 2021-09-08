@@ -1,22 +1,22 @@
-import {useEffect, useState} from 'react'
+import {ReactElement, useEffect, useState} from 'react';
 import TakeToken from "./TakeToken";
 import ReleaseToken from "./ReleaseToken";
 import axios from "axios";
 import {Alert} from "@material-ui/lab";
-import useInterval from "./utils/useInterval"
+import useInterval from "./utils/useInterval";
 
 interface User {
     username: string,
     token_creation_date : string
 }
 
-export default function Login() {
+export default function Login(): ReactElement {
 
     const [user, setUser] = useState<User | null>(null);
     const [refresh, setRefresh] = useState<boolean>(false)
 
 
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
         const result = await axios(process.env.React_App_URL_API + "reservation/state");
             setUser(result.data);
     }
@@ -27,7 +27,7 @@ export default function Login() {
             10000
         );
 
-        useEffect(() => {
+        useEffect(() :void => {
                 fetchData()
             }
             , [refresh]
@@ -35,7 +35,7 @@ export default function Login() {
 
 
         //Tuto transfert de props parent => enfant https://www.youtube.com/watch?v=yH5Z-lSeV9Y
-        const refreshComponent = () => {
+        const refreshComponent = (): void => {
             setRefresh(!refresh);
         }
 
@@ -44,8 +44,7 @@ export default function Login() {
                 {user === null
                     ? <TakeToken refresh={refreshComponent}/>
                     : <div>
-                        <Alert severity="info">The board is taken
-                            by {user.username} since {user.token_creation_date} ⌛</Alert>
+                        <Alert severity="info">The board is taken by {user.username} since {user.token_creation_date} ⌛</Alert>
                         <ReleaseToken refresh={refreshComponent}/>
                     </div>
                 }
