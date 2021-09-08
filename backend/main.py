@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 
-class Response(BaseModel):
+class StatusResponse(BaseModel):
     message: str
     status: bool
 
@@ -28,7 +28,7 @@ class User(BaseModel):
 
 
 class Token(BaseModel):
-    creation_date: str
+    token_creation_date: str
     username: Optional[str] = None
 
 
@@ -45,7 +45,6 @@ def read_root():
 # http://127.0.0.1:8000/webcam/
 async def webcam():
     print("/webcam")
-    print("J'allume la caméra")
     image_webcam = FileResponse("./images/image.jpeg")
     return image_webcam
 
@@ -54,22 +53,23 @@ async def webcam():
 # http://127.0.0.1:8000/relay/
 def toggle_relay(name: str):
     print(f"Je toggle {name}")
-    r = Response(message="ok", status=True)
+    r = StatusResponse(message="ok", status=True)
     return r
 
 
 @app.post("/reservation/take")
 # http://127.0.0.1:8000/reservation/take
 # JSON INPUT EXAMPLE {"username" : "Johndoe"}
-def create_access_token(user: User):
+def create_access_token(user: User, response: Response):
     global token
     now = datetime.now()
     if token is None:
-        token = Token(access_token="im_the_token", creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")), username=user.username)
+        token = Token(access_token="im_the_token", token_creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")), username=user.username)
         print("Creation du token : "+str(token))
         return token
     else:
-        r = Response(message="Token is already taken by " + token.username, status=True)
+        response.status_code = status.HTTP_409_CONFLICT
+        r = StatusResponse(message="Token is already taken by " + token.username, status=False)
         return r
 
 
@@ -82,15 +82,14 @@ async def token_state():
 
 @app.post("/reservation/release")
 # http://127.0.0.1:8000reservation/release
-def release_token():
+def release_token(response: Response):
     global token
     if token is None:
-        r = Response(message="Token is already free", status=True)
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        r = StatusResponse(message="Token is already free", status=False)
         return r
     else:
-        print("Last user =>" + token.username)
+        print("Last user => " + token.username)
         token = None
-        r = Response(message="Token released", status=True)
+        r = StatusResponse(message="Token released", status=True)
         return r
-
-
