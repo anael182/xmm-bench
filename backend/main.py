@@ -5,9 +5,13 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import requests
+from dotenv import load_dotenv
+import os
 
 
 app = FastAPI()
+load_dotenv()
+
 
 origins = ["*"]
 
@@ -35,7 +39,9 @@ class Token(BaseModel):
 
 
 token = None
-webhook_url = "https://korysio.webhook.office.com/webhookb2/5ba335ea-50b1-44e4-9c34-d033490189d1@15d63a43-86e5-40f2-babb-27efcf4bdf52/IncomingWebhook/9252f6b311284deba4f104cc42e882ea/46993418-bc59-4aac-aabb-f1320552c085"
+
+
+
 
 @app.get("/")
 # http://127.0.0.1:8000/
@@ -88,7 +94,7 @@ def create_access_token(user: User, response: Response):
                 "markdown": True
             }]
         }
-        requests.post(url=webhook_url, json=data)
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
         return token
     else:
         response.status_code = status.HTTP_409_CONFLICT
@@ -134,7 +140,7 @@ def release_token( response: Response):
                 "markdown": True
             }]
         }
-        requests.post(url=webhook_url, json=data)
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
         token = None
         r = StatusResponse(message="Token released", status=True)
         return r
