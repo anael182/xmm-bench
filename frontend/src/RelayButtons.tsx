@@ -6,7 +6,7 @@ import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
-            marginTop:20,
+            marginTop: 20,
             maxWidth: 500,
             margin: 'auto',
         },
@@ -24,7 +24,8 @@ export default function RelayButtons() {
     const classes = useStyles();
 
     return (
-        <Grid container direction="row" justifyContent="center" alignItems="center" spacing={1} className={classes.root}>
+        <Grid container direction="row" justifyContent="center" alignItems="center" spacing={1}
+              className={classes.root}>
             <Grid item xs={3}>
                 <Button variant="contained" color="primary" title="relayOne" onClick={toggleRelay}>Relay 1</Button>
             </Grid>

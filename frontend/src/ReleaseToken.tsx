@@ -17,7 +17,7 @@ interface LoginProps {
     refresh: () => void;
 }
 
-export default function ReleaseToken (props: LoginProps): ReactElement {
+export default function ReleaseToken(props: LoginProps): ReactElement {
 
     const classes = useStyles();
 
@@ -27,7 +27,7 @@ export default function ReleaseToken (props: LoginProps): ReactElement {
             method: 'post',
             url: process.env.React_App_URL_API + 'reservation/release',
         })
-            .then(()=> props.refresh())
+            .then(() => props.refresh())
             .catch(err => console.error("ERROR =>" + err));
     }
 
@@ -35,7 +35,8 @@ export default function ReleaseToken (props: LoginProps): ReactElement {
     return (
         <Box display="flex" justifyContent="center">
             <form onSubmit={handleRelease}>
-            <Button variant="contained" color="primary" type="submit" className={classes.root}>Release Token</Button>
+                <Button variant="contained" color="primary" type="submit" className={classes.root}>Release
+                    Token</Button>
             </form>
         </Box>
     )

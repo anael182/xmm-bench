@@ -6,7 +6,6 @@ import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
 
 
-
 // Material UI components CSS
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -14,8 +13,8 @@ const useStyles = makeStyles((theme: Theme) =>
             marginTop: 60,
         },
         button: {
-            marginTop:"10%",
-            marginLeft:"20%",
+            marginTop: "10%",
+            marginLeft: "20%",
         }
     }),
 );
@@ -25,33 +24,35 @@ interface LoginProps {
 }
 
 
-export default function TakeToken (props: LoginProps): ReactElement {
+export default function TakeToken(props: LoginProps): ReactElement {
 
     const classes = useStyles();
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
-            if (e.currentTarget.username.value !== "") {
-                axios({
-                    method: 'post',
-                    url: process.env.React_App_URL_API + 'reservation/take',
-                    data: {username: e.currentTarget.username.value}
+        if (e.currentTarget.username.value !== "") {
+            axios({
+                method: 'post',
+                url: process.env.React_App_URL_API + 'reservation/take',
+                data: {username: e.currentTarget.username.value}
+            })
+                .then(() => {
+                    props.refresh();
                 })
-                    .then(() => {
-                        props.refresh();
-                    })
-                    .catch(err => console.error("ERROR =>" + err));
-            }
+                .catch(err => console.error("ERROR =>" + err));
+        }
     }
 
     return (
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             <form onSubmit={handleSubmit}>
                 <div>
-                    <TextField type="text" id="outlined-basic" label="Username" name="username" autoFocus={true} variant="outlined"/>
+                    <TextField type="text" id="outlined-basic" label="Username" name="username" autoFocus={true}
+                               variant="outlined"/>
                 </div>
                 <div>
-                <Button type="submit" variant="contained" color="primary" className={classes.button}>Take Token</Button>
+                    <Button type="submit" variant="contained" color="primary" className={classes.button}>Take
+                        Token</Button>
                 </div>
             </form>
         </Grid>

@@ -44,8 +44,6 @@ export default function Login(): ReactElement {
         , [refresh]
     )
 
-
-    //Tuto transfert de props parent => enfant https://www.youtube.com/watch?v=yH5Z-lSeV9Y
     const refreshComponent = (): void => {
         setRefresh(!refresh);
     }
@@ -55,7 +53,8 @@ export default function Login(): ReactElement {
             {user === null
                 ? <TakeToken refresh={refreshComponent}/>
                 : <div>
-                    <Alert severity="success" className={classes.alert}>The board is taken by {user.username} since {user.token_creation_date} ⌛</Alert>
+                    <Alert severity="success" className={classes.alert}>The board is taken
+                        by {user.username} since {user.token_creation_date} ⌛</Alert>
                     <ReleaseToken refresh={refreshComponent}/>
                 </div>
             }
