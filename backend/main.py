@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import os
 import subprocess
 import asyncio
-import cv2
+import v4l2py
 
 
 app = FastAPI()
@@ -45,27 +45,35 @@ class Token(BaseModel):
 # Webcam management
 #
 
+async def AsyncStream(stream):
+    import asyncio
+    cap = stream.video_capture
+    fd = cap.device.fileno()
+    loop = asyncio.get_event_loop()
+    event = asyncio.Event()
+    loop.add_reader(fd, event.set)
+    try:
+        cap.start()
+        while True:
+            await event.wait()
+            event.clear()
+            yield stream.read()
+    finally:
+        cap.stop()
+        loop.remove_reader(fd)
+
+
 class WebcamRunner:
 
     def __init__(self):
-        self.en_capture = True
-        self.capture = cv2.VideoCapture(0)
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+        self.cam = v4l2py.Device.from_id(0)
+        self.cam.video_capture.set_format(800, 600, 'MJPG')
 
         self.current = None
 
     async def run_capture(self):
-        while True:
-            if self.en_capture:
-                rc, img = self.capture.read()
-                if not rc:
-                    continue
-                rc, array = cv2.imencode('.jpg', img)
-                self.current = array.tobytes()
-            else:
-                self.current = None
-            await asyncio.sleep(1/30)
+        async for frame in AsyncStream(v4l2py.device.VideoStream(self.cam.video_capture)):
+            self.current = frame
 
     async def video_streamer(self):
         while True:
