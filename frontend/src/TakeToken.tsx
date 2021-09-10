@@ -1,16 +1,22 @@
-import {Button, Grid, Input, InputLabel} from '@material-ui/core';
+import {Button} from '@material-ui/core';
 import axios from "axios";
 import {makeStyles, createStyles, Theme} from '@material-ui/core/styles';
 import {FormEvent, ReactElement} from "react";
+import Grid from '@material-ui/core/Grid';
+import TextField from '@material-ui/core/TextField';
+
+
 
 // Material UI components CSS
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
-            '& > *': {
-                paddingTop: theme.spacing(3),
-            },
+            marginTop: 60,
         },
+        button: {
+            marginTop:"10%",
+            marginLeft:"20%",
+        }
     }),
 );
 
@@ -39,11 +45,14 @@ export default function TakeToken (props: LoginProps): ReactElement {
     }
 
     return (
-        <Grid container justifyContent = "center" className={classes.root}>
+        <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             <form onSubmit={handleSubmit}>
-                <InputLabel required={true} htmlFor="my-input">Username</InputLabel>
-                <Input type="text" name="username" autoFocus={true} aria-describedby="my-helper-text"/>
-                <Button type="submit" variant="contained" color="primary">Take Token</Button>
+                <div>
+                    <TextField type="text" id="outlined-basic" label="Username" name="username" autoFocus={true} variant="outlined"/>
+                </div>
+                <div>
+                <Button type="submit" variant="contained" color="primary" className={classes.button}>Take Token</Button>
+                </div>
             </form>
         </Grid>
     );

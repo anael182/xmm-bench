@@ -1,12 +1,25 @@
 import React, {FormEvent, ReactElement} from 'react';
-import {Button, Grid} from '@material-ui/core';
+import {Button} from '@material-ui/core';
 import axios from "axios";
+import Box from '@material-ui/core/Box';
+import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+
+const useStyles = makeStyles((theme: Theme) =>
+    createStyles({
+        root: {
+            marginTop: 100,
+        }
+    }),
+);
+
 
 interface LoginProps {
     refresh: () => void;
 }
 
 export default function ReleaseToken (props: LoginProps): ReactElement {
+
+    const classes = useStyles();
 
     const handleRelease = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -20,10 +33,10 @@ export default function ReleaseToken (props: LoginProps): ReactElement {
 
 
     return (
-        <Grid container justifyContent = "center">
+        <Box display="flex" justifyContent="center">
             <form onSubmit={handleRelease}>
-            <Button variant="contained" color="primary" type="submit">Release Token</Button>
+            <Button variant="contained" color="primary" type="submit" className={classes.root}>Release Token</Button>
             </form>
-        </Grid>
+        </Box>
     )
 }
