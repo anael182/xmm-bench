@@ -3,14 +3,16 @@ import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import KorysLogo from "./img/KorysLogo.png"
 import Grid from '@material-ui/core/Grid';
+import KorysLogo from './img/KorysLogo.png'
+
+
 
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         navbar: {
-            width: 'auto',
+            width:'auto',
             flexGrow: 1,
         },
         title: {
@@ -18,10 +20,10 @@ const useStyles = makeStyles((theme: Theme) =>
             paddingLeft: 20,
         },
         logo: {
-            width: 80,
+            width:80,
         },
         corpo: {
-            marginRight: 10,
+            marginRight:10,
         }
     }),
 );
@@ -39,7 +41,7 @@ export default function NavBar() {
                         XMM Bench
                     </Typography>
                     <Typography variant="h6" className={classes.corpo}>Korys Technologies</Typography>
-                </Toolbar>
+            </Toolbar>
             </AppBar>
         </Grid>
     );
