@@ -8,7 +8,8 @@ import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
-        root: {
+        alert: {
+            justifyContent: 'center',
         },
     }),
 );
@@ -50,11 +51,11 @@ export default function Login(): ReactElement {
     }
 
     return (
-        <div className={classes.root}>
+        <div>
             {user === null
                 ? <TakeToken refresh={refreshComponent}/>
                 : <div>
-                    <Alert severity="success">The board is taken by {user.username} since {user.token_creation_date} ⌛</Alert>
+                    <Alert severity="success" className={classes.alert}>The board is taken by {user.username} since {user.token_creation_date} ⌛</Alert>
                     <ReleaseToken refresh={refreshComponent}/>
                 </div>
             }
