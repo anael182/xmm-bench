@@ -33,7 +33,6 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-
 export default function RelayButtons() {
 
     const toggleRelay = (e: any): void => {
@@ -46,19 +45,19 @@ export default function RelayButtons() {
     return (
         <Grid container direction="row" justifyContent="center" alignItems="center" className={classes.root}>
             <Grid item xs={4} sm={2}>
-                <Button variant="contained" color="primary" title="Flash" onClick={toggleRelay} className={classes.flash}>Flash</Button>
+                <Button variant="contained" color="primary" title="flash" onClick={toggleRelay} className={classes.flash}>Flash</Button>
             </Grid>
             <Grid item xs={4} sm={2}>
-                <Button variant="contained" color="primary" title="Power" onClick={toggleRelay} className={classes.power}>Power</Button>
+                <Button variant="contained" color="primary" title="power" onClick={toggleRelay} className={classes.power}>Power</Button>
             </Grid>
             <Grid item xs={4} sm={2}>
-                <Button variant="contained" color="primary" title="Reboot" onClick={toggleRelay} className={classes.reboot}>Reboot</Button>
+                <Button variant="contained" color="primary" title="reboot" onClick={toggleRelay} className={classes.reboot}>Reboot</Button>
             </Grid>
             <Grid item xs={4} sm={2}>
-                <Button variant="contained" color="primary" title="cv22boot" onClick={toggleRelay} className={classes.cv22boot}> cv22boot</Button>
+                <Button variant="contained" color="primary" title="cv22boot" onClick={toggleRelay} className={classes.cv22boot}>CV22 boot</Button>
             </Grid>
             <Grid item xs={4} sm={2}>
-                <Button variant="contained" color="primary" title="cv22flash" onClick={toggleRelay} className={classes.cv22flash}>cv22flash</Button>
+                <Button variant="contained" color="primary" title="cv22flash" onClick={toggleRelay} className={classes.cv22flash}>CV22 flash</Button>
             </Grid>
         </Grid>
     );
