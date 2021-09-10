@@ -12,6 +12,9 @@ const useStyles = makeStyles((theme: Theme) =>
         root: {
             marginTop: 60,
         },
+        input: {
+            marginTop:"15%",
+        },
         button: {
             marginTop: "10%",
             marginLeft: "20%",
@@ -48,7 +51,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
             <form onSubmit={handleSubmit}>
                 <div>
                     <TextField type="text" id="outlined-basic" label="Username" name="username" autoFocus={true}
-                               variant="outlined"/>
+                               variant="outlined" className={classes.input}/>
                 </div>
                 <div>
                     <Button type="submit" variant="contained" color="primary" className={classes.button}>Take

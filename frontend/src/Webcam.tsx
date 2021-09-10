@@ -6,15 +6,12 @@ const useStyles = makeStyles((theme: Theme) =>
         root: {
             display: 'flex',
             justifyContent: 'center',
-            //border: '1px solid',
-            marginTop: 30,
+            marginTop: 50,
         },
         webcam: {
             maxHeight: 600,
             maxWidth: 800,
-            //border: '1px solid',
         }
-
     }),
 );
 
