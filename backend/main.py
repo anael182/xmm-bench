@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import FastAPI, Response, status
 from fastapi.responses import StreamingResponse
+from pyasn1.compat.octets import null
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -34,10 +35,12 @@ class StatusResponse(BaseModel):
 
 class User(BaseModel):
     username: str
+    token_runtimes: int
 
 
 class Token(BaseModel):
     token_creation_date: str
+    token_expires_date: str
     username: Optional[str] = None
 
 
@@ -45,7 +48,7 @@ class Token(BaseModel):
 # Webcam management
 #
 
-async def AsyncStream(stream):
+async def async_stream(stream):
     import asyncio
     cap = stream.video_capture
     fd = cap.device.fileno()
@@ -76,7 +79,7 @@ class WebcamRunner:
 
     async def run_capture(self):
         if self.cam:
-            async for frame in AsyncStream(v4l2py.device.VideoStream(self.cam.video_capture)):
+            async for frame in async_stream(v4l2py.device.VideoStream(self.cam.video_capture)):
                 self.current = frame
 
     async def video_streamer(self):
@@ -116,18 +119,18 @@ XMM_RELAY_BIN = os.getenv("XMM_RELAY_BIN", "/home/korys/bin/xmm_relay")
 @app.post("/relay/{name}")
 # http://127.0.0.1:8000/relay/
 def toggle_relay(name: str):
-    if (name == 'flash'):
+    if name == 'flash':
         r = subprocess.run([XMM_RELAY_BIN, "-f"])
-    elif (name == 'power'):
+    elif name == 'power':
         r = subprocess.run([XMM_RELAY_BIN, "-p"])
-    elif (name == 'reboot'):
+    elif name == 'reboot':
         r = subprocess.run([XMM_RELAY_BIN, "-r"])
-    elif (name == 'cv22boot'):
+    elif name == 'cv22boot':
         r = subprocess.run([XMM_RELAY_BIN, "-c"])
-    elif (name == 'cv22flash'):
+    elif name == 'cv22flash':
         r = subprocess.run([XMM_RELAY_BIN, "-v"])
 
-    r = StatusResponse(message=r.stdout, status=r.returncode == 0)
+    r = StatusResponse(message="", status=r.returncode == 0)
     return r
 
 
@@ -145,10 +148,12 @@ token = None
 def create_access_token(user: User, response: Response):
     global token
     now = datetime.now()
+    expire = now+timedelta(minutes=user.token_runtimes)
     if token is None:
         token = Token(
             access_token="im_the_token",
             token_creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")),
+            token_expires_date=str(expire.strftime("%d/%m/%Y %H:%M:%S")),
             username=user.username,
         )
         print("Creation du token : " + str(token))
@@ -159,7 +164,12 @@ def create_access_token(user: User, response: Response):
             "summary":  user.username+" is using "+os.getenv("BOARD_NAME"),
             "sections": [{
                 "activityTitle": user.username+" is using "+os.getenv("BOARD_NAME"),
-                "facts": [],
+                "facts": [
+                    {
+                        "name": "token claimed untill",
+                        "value": token.token_expires_date
+                    }
+                ],
                 "markdown": True
             }]
         }
@@ -173,13 +183,6 @@ def create_access_token(user: User, response: Response):
         return r
 
 
-@app.get("/reservation/state")
-# http://127.0.0.1:8000/reservation/state
-async def token_state():
-    global token
-    return token
-
-
 @app.post("/reservation/release")
 # http://127.0.0.1:8000/reservation/release
 def release_token(response: Response):
@@ -190,7 +193,6 @@ def release_token(response: Response):
         return r
     else:
         print("Last user => " + token.username)
-        now = datetime.now()
         data = {
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
@@ -206,6 +208,20 @@ def release_token(response: Response):
         token = None
         r = StatusResponse(message="Token released", status=True)
         return r
+
+
+@app.get("/reservation/state")
+# http://127.0.0.1:8000/reservation/state
+async def token_state():
+    global token
+    now = datetime.now()
+    if token is not None:
+        a = datetime.strptime(now.strftime("%d/%m/%Y %H:%M:%S"), "%d/%m/%Y %H:%M:%S")
+        b = datetime.strptime(token.token_expires_date, "%d/%m/%Y %H:%M:%S")
+        if a <= b:
+            token = None
+    else:
+        return token
 
 
 @app.get("/board")

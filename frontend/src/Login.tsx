@@ -16,7 +16,9 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface User {
     username: string,
-    token_creation_date: string
+    token_creation_date: string,
+    token_runtimes: string
+
 }
 
 export default function Login(): ReactElement {

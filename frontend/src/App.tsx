@@ -44,7 +44,7 @@ export default function App(): ReactElement {
     if (loading) return (
         <div>
         <NavBar/>
-            <Grid container justify = "center" alignItems="center" className={classes.loading}>
+            <Grid container justifyContent = "center" alignItems="center" className={classes.loading}>
         <CircularProgress size={100}/>
             </Grid>
         </div>

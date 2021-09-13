@@ -12,23 +12,29 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         flash: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
         },
         power: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
         },
         reboot: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
         },
         cv22boot: {
             marginTop: 5,
-            width: 100
+            width: 110,
+            height:50,
         },
         cv22flash: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
+            marginLeft:10,
         },
     }),
 );

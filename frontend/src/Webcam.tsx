@@ -9,8 +9,8 @@ const useStyles = makeStyles((theme: Theme) =>
             marginTop: 50,
         },
         webcam: {
-            maxHeight: 600,
-            maxWidth: 800,
+            height: 600,
+            width: 800,
         }
     }),
 );
