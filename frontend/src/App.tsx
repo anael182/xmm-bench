@@ -26,7 +26,7 @@ export default function App(): ReactElement {
     const [loading, setLoading] = useState(true);
 
     const backendConnected = async (): Promise<void> => {
-        const result = await axios(process.env.React_App_URL_API+"");
+        const result = await axios(process.env.React_App_URL_API+"board");
         setConnect(result.data);
     }
 

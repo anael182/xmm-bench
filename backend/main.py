@@ -66,19 +66,26 @@ async def AsyncStream(stream):
 class WebcamRunner:
 
     def __init__(self):
-        self.cam = v4l2py.Device.from_id(0)
-        self.cam.video_capture.set_format(800, 600, 'MJPG')
+        try:
+            self.cam = v4l2py.Device.from_id(0)
+            self.cam.video_capture.set_format(800, 600, 'MJPG')
+        except:
+            self.cam = None
 
         self.current = None
 
     async def run_capture(self):
-        async for frame in AsyncStream(v4l2py.device.VideoStream(self.cam.video_capture)):
-            self.current = frame
+        if self.cam:
+            async for frame in AsyncStream(v4l2py.device.VideoStream(self.cam.video_capture)):
+                self.current = frame
 
     async def video_streamer(self):
-        while True:
-            yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+self.current
-            await asyncio.sleep(1/30)
+        if self.cam:
+            while True:
+                yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+self.current
+                await asyncio.sleep(1/30)
+        else:
+            yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+open('images/image.jpeg', 'rb').read()
 
 
 webcam_runner = WebcamRunner()
