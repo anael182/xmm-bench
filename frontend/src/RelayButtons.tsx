@@ -7,31 +7,32 @@ const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
             marginTop: 40,
-            maxWidth: 800,
+            maxWidth: 900,
             margin: 'auto',
         },
         flash: {
-            marginTop:5,
-            minWidth: 100
+            marginTop: 5,
+            width: 100
         },
         power: {
-            marginTop:5,
-            minWidth: 100
+            marginTop: 5,
+            width: 100
         },
         reboot: {
-            marginTop:5,
-            minWidth: 100
+            marginTop: 5,
+            width: 100
         },
         cv22boot: {
-            marginTop:5,
-            minWidth: 100
+            marginTop: 5,
+            width: 100
         },
         cv22flash: {
-            marginTop:5,
-            minWidth: 100
+            marginTop: 5,
+            width: 100
         },
     }),
 );
+
 
 export default function RelayButtons() {
 
