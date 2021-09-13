@@ -149,21 +149,12 @@ def create_access_token(user: User, response: Response):
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
             "themeColor": "0076D7",
-            "summary": user.username + " is using the XMM-bench",
-            "sections": [
-                {
-                    "activityTitle": user.username + " is using the XMM-bench",
-                    "facts": [
-                        {"name": "Assigned to", "value": user.username},
-                        {
-                            "name": "Date",
-                            "value": str(now.strftime("%d/%m/%Y %H:%M:%S")),
-                        },
-                        {"name": "Status", "value": "XMM bench is busy"},
-                    ],
-                    "markdown": True,
-                }
-            ],
+            "summary":  user.username+" is using "+os.getenv("BOARD_NAME"),
+            "sections": [{
+                "activityTitle": user.username+" is using "+os.getenv("BOARD_NAME"),
+                "facts": [],
+                "markdown": True
+            }]
         }
         requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
         return token
@@ -197,23 +188,20 @@ def release_token(response: Response):
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
             "themeColor": "0076D7",
-            "summary": token.username + " just released the XMM-bench",
-            "sections": [
-                {
-                    "activityTitle": token.username + " just released the XMM-bench",
-                    "facts": [
-                        {"name": "Assigned to", "value": token.username},
-                        {
-                            "name": "Date",
-                            "value": str(now.strftime("%d/%m/%Y %H:%M:%S")),
-                        },
-                        {"name": "Status", "value": "XMM bench is free"},
-                    ],
-                    "markdown": True,
-                }
-            ],
+            "summary":  token.username+" just released "+os.getenv("BOARD_NAME"),
+            "sections": [{
+                "activityTitle": token.username+" just released "+os.getenv("BOARD_NAME"),
+                "facts": [],
+                "markdown": True
+            }]
         }
         requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
         token = None
         r = StatusResponse(message="Token released", status=True)
         return r
+
+
+@app.get("/board")
+# http://127.0.0.1:8000/board
+def get_board():
+    return {"board_name": os.getenv("BOARD_NAME")}
