@@ -28,6 +28,29 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
+const marks = [
+    {
+        value: 60,
+        label: '1H',
+    },
+    {
+        value: 120,
+        label: '2H',
+    },
+    {
+        value: 180,
+        label: '3H',
+    },
+    {
+        value: 240,
+        label: '4H',
+    },
+    {
+        value: 300,
+        label: '5H',
+    },
+];
+
 interface LoginProps {
     refresh: () => void;
 }
@@ -45,13 +68,12 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
-        console.log(value);
         if (e.currentTarget.username.value !== "") {
             axios({
                 method: 'post',
                 url: process.env.React_App_URL_API + 'reservation/take',
                 data: {username: e.currentTarget.username.value,
-                    token_runtimes: value+""}
+                    token_minutes: value+""}
             })
                 .then(() => {
                     props.refresh();
@@ -70,14 +92,13 @@ export default function TakeToken(props: LoginProps): ReactElement {
                         Token duration
                     </Typography>
                     <Slider
-                        defaultValue={30}
+                        defaultValue={300}
                         onChange={(event, val) => onSliderChange(val)}
                         aria-labelledby="discrete-slider"
-                        valueLabelDisplay="auto"
-                        step={10}
-                        marks
-                        min={10}
-                        max={60}
+                        step={60}
+                        marks={marks}
+                        min={60}
+                        max={300}
                     />
                 </div>
                 <div>

@@ -10,16 +10,16 @@ const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         alert: {
             justifyContent: 'center',
-            alignItems:'center',
             textAlign: 'center',
         },
     }),
 );
 
+
 interface User {
     username: string,
-    token_creation_date: string,
-    token_expires_date: string
+    creation_date: string,
+    expires_date: string
 
 }
 
@@ -58,7 +58,7 @@ export default function Login(): ReactElement {
                 ? <TakeToken refresh={refreshComponent}/>
                 : <div>
                     <Alert severity="success" className={classes.alert}>The board is taken
-                        by {user.username} since {user.token_creation_date} ⌛. The token will expire on {user.token_expires_date}.</Alert>
+                        by {user.username} since {user.creation_date} ⌛. The token will expire on {user.expires_date}.</Alert>
                     <ReleaseToken refresh={refreshComponent}/>
                 </div>
             }

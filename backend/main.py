@@ -34,14 +34,14 @@ class StatusResponse(BaseModel):
     status: bool
 
 
-class User(BaseModel):
+class InputToken(BaseModel):
     username: str
-    token_runtimes: int
+    token_minutes: int
 
 
 class Token(BaseModel):
-    token_creation_date: str
-    token_expires_date: str
+    creation_date: datetime
+    expires_date: datetime
     username: Optional[str] = None
 
 
@@ -146,36 +146,37 @@ token = None
 @app.post("/reservation/take")
 # http://127.0.0.1:8000/reservation/take
 # JSON INPUT EXAMPLE {"username" : "Johndoe"}
-def create_access_token(user: User, response: Response):
+def create_access_token(input_token: InputToken, response: Response):
     global token
-    now = datetime.now()
-    expire = now+timedelta(minutes=user.token_runtimes)
     if token is None:
         token = Token(
-            access_token="im_the_token",
-            token_creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")),
-            token_expires_date=str(expire.strftime("%d/%m/%Y %H:%M:%S")),
-            username=user.username,
+            creation_date=datetime.now(),
+            expires_date=datetime.now()+timedelta(minutes=input_token.token_minutes),
+            username=input_token.username,
         )
         print("Creation du token : " + str(token))
         data = {
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
             "themeColor": "0076D7",
-            "summary":  user.username+" is using "+os.getenv("BOARD_NAME"),
+            "summary":  input_token.username+" is using "+os.getenv("BOARD_NAME"),
             "sections": [{
-                "activityTitle": user.username+" is using "+os.getenv("BOARD_NAME"),
+                "activityTitle": input_token.username+" is using "+os.getenv("BOARD_NAME"),
                 "facts": [
                     {
                         "name": "token claimed untill",
-                        "value": token.token_expires_date
+                        "value": token.expires_date.strftime("%d/%m/%Y %H:%M:%S")
                     }
                 ],
                 "markdown": True
             }]
         }
         requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
-        return token
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
+        }
     else:
         response.status_code = status.HTTP_409_CONFLICT
         r = StatusResponse(
@@ -215,14 +216,17 @@ def release_token(response: Response):
 # http://127.0.0.1:8000/reservation/state
 async def token_state():
     global token
-    now = datetime.now()
     if token is not None:
-        a = time.strptime(now.strftime("%d/%m/%Y %H:%M:%S"), "%d/%m/%Y %H:%M:%S")
-        b = time.strptime(token.token_expires_date, "%d/%m/%Y %H:%M:%S")
-        if a >= b:
+        if token.creation_date >= token.expires_date:
             token = None
         else:
-            return token
+            return {
+                'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+                'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
+                'username': token.username,
+            }
+    else:
+        return token
 
 
 @app.get("/board")
