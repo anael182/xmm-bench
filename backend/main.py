@@ -11,6 +11,7 @@ import os
 import subprocess
 import asyncio
 import v4l2py
+import time
 
 
 app = FastAPI()
@@ -216,12 +217,12 @@ async def token_state():
     global token
     now = datetime.now()
     if token is not None:
-        a = datetime.strptime(now.strftime("%d/%m/%Y %H:%M:%S"), "%d/%m/%Y %H:%M:%S")
-        b = datetime.strptime(token.token_expires_date, "%d/%m/%Y %H:%M:%S")
-        if a <= b:
+        a = time.strptime(now.strftime("%d/%m/%Y %H:%M:%S"), "%d/%m/%Y %H:%M:%S")
+        b = time.strptime(token.token_expires_date, "%d/%m/%Y %H:%M:%S")
+        if a >= b:
             token = None
-    else:
-        return token
+        else:
+            return token
 
 
 @app.get("/board")
