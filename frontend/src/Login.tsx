@@ -57,10 +57,11 @@ export default function Login(): ReactElement {
             {user === null
                 ? <TakeToken refresh={refreshComponent}/>
                 : <div>
-                    <Alert severity="success" className={classes.alert}>The board is taken
-                        by {user.username} since {user.creation_date} ⌛. The token will expire on {user.expires_date}.</Alert>
-                    <ReleaseToken refresh={refreshComponent}/>
-                </div>
+                        <Alert severity="success" className={classes.alert}>The board is taken
+                            by {user.username} since {user.creation_date} ⌛. The token will expire
+                            on {user.expires_date}.</Alert>
+                        <ReleaseToken refresh={refreshComponent}/>
+                    </div>
             }
         </div>
     );

@@ -267,8 +267,13 @@ async def token_state():
                 'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
                 'username': token.username,
             }
+    elif token is not None and token.expires_date is None:
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
+        }
     else:
-        return token
+        return None
 
 
 @app.get("/board")
