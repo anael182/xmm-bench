@@ -1,9 +1,9 @@
 import axios from "axios";
 import {Button} from "@material-ui/core";
 import Grid from '@material-ui/core/Grid';
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {createStyles, makeStyles} from "@material-ui/core/styles";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles(() =>
     createStyles({
         root: {
             marginTop: 40,

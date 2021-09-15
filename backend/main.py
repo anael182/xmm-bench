@@ -36,7 +36,7 @@ class StatusResponse(BaseModel):
 
 class InputToken(BaseModel):
     username: str
-    token_minutes: int
+    token_minutes: int = 300
 
 
 class Token(BaseModel):
@@ -217,7 +217,23 @@ def release_token(response: Response):
 async def token_state():
     global token
     if token is not None:
-        if token.creation_date >= token.expires_date:
+        if datetime.now() >= token.expires_date:
+            data = {
+                "@type": "MessageCard",
+                "@context": "http://schema.org/extensions",
+                "themeColor": "0076D7",
+                "summary":  token.username+" just released "+os.getenv("BOARD_NAME"),
+                "sections": [{
+                    "activityTitle": token.username+" just released "+os.getenv("BOARD_NAME"),
+                    "facts": [
+                        {
+                            "name": "token duration expired",
+                        }
+                    ],
+                    "markdown": True
+                }]
+            }
+            requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
             token = None
         else:
             return {
