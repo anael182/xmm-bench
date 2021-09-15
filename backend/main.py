@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import FastAPI, Response, status
 from fastapi.responses import StreamingResponse
-from pyasn1.compat.octets import null
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -11,7 +10,6 @@ import os
 import subprocess
 import asyncio
 import v4l2py
-import time
 
 
 app = FastAPI()
@@ -36,12 +34,12 @@ class StatusResponse(BaseModel):
 
 class InputToken(BaseModel):
     username: str
-    token_minutes: int = 300
+    token_minutes: Optional[int]
 
 
 class Token(BaseModel):
     creation_date: datetime
-    expires_date: datetime
+    expires_date: Optional[datetime]
     username: Optional[str] = None
 
 
@@ -148,7 +146,7 @@ token = None
 # JSON INPUT EXAMPLE {"username" : "Johndoe"}
 def create_access_token(input_token: InputToken, response: Response):
     global token
-    if token is None:
+    if token is None and input_token.token_minutes is not None:
         token = Token(
             creation_date=datetime.now(),
             expires_date=datetime.now()+timedelta(minutes=input_token.token_minutes),
@@ -175,6 +173,34 @@ def create_access_token(input_token: InputToken, response: Response):
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
+        }
+    elif token is None and input_token.token_minutes is None:
+        token = Token(
+            creation_date=datetime.now(),
+            expires_date=None,
+            username=input_token.username,
+        )
+        data = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0076D7",
+            "summary":  input_token.username+" is using "+os.getenv("BOARD_NAME"),
+            "sections": [{
+                "activityTitle": input_token.username+" is using "+os.getenv("BOARD_NAME"),
+                "facts": [
+                    {
+                        "name": "token claimed without expiration time",
+                        "value": "Please don't forget to release it :)"
+                    }
+                ],
+                "markdown": True
+            }]
+        }
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'expires_date': None,
             'username': token.username,
         }
     else:
@@ -216,7 +242,7 @@ def release_token(response: Response):
 # http://127.0.0.1:8000/reservation/state
 async def token_state():
     global token
-    if token is not None:
+    if token is not None and token.expires_date is not None:
         if datetime.now() >= token.expires_date:
             data = {
                 "@type": "MessageCard",
