@@ -49,7 +49,6 @@ export default function RelayButtons() {
     const toggleWebcam = (): void => {
         setToggleCam(!toggleCam);
     }
-
     const onSliderChange = (val: number | number[]) => {
             setFramerateWebcam(val as number);
             axios({
