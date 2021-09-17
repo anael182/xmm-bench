@@ -35,7 +35,7 @@ export default function App(): ReactElement {
             if (loading) {
                 setTimeout(() => {
                     setLoading(false);
-                }, 1000);
+                }, 500);
             }
         }
         , [loading]

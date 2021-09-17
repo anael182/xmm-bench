@@ -36,15 +36,13 @@ export default function RelayButtons() {
     const classes = useStyles();
 
     return (
-        toggleCam
-            ?
-            <Grid container className={classes.root}>
-                <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}
-                     onClick={toggleWebcam}/>
-            </Grid>
-            :
-            <Grid container className={classes.root}>
-            <Button startIcon={<PhotoCameraIcon />} variant="outlined" color="primary" onClick={toggleWebcam} className={classes.webcamButton}>Camera</Button>
+        <Grid container className={classes.root}>
+            {toggleCam
+                ? <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}
+                       onClick={toggleWebcam}/>
+                : <Button startIcon={<PhotoCameraIcon/>} variant="outlined" color="primary" onClick={toggleWebcam}
+                          className={classes.webcamButton}>Camera</Button>
+            }
             </Grid>
     )
 }
