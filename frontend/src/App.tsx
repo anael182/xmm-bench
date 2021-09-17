@@ -13,7 +13,7 @@ import Grid from '@material-ui/core/Grid';
 const useStyles = makeStyles(() =>
     createStyles({
         loading: {
-            marginTop:'25%',
+            marginTop:'20%',
         },
     }),
 );
@@ -35,7 +35,7 @@ export default function App(): ReactElement {
             if (loading) {
                 setTimeout(() => {
                     setLoading(false);
-                }, 500);
+                }, 1000);
             }
         }
         , [loading]

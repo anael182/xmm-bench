@@ -2,7 +2,7 @@ import Grid from '@material-ui/core/Grid';
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {useState} from "react";
 import {Button} from '@material-ui/core';
-    import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
+import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
 
 
 const useStyles = makeStyles(() =>
