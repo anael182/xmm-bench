@@ -92,6 +92,47 @@ class WebcamRunner:
 
 webcam_runner = WebcamRunner()
 
+#
+# Webhook management
+#
+
+
+def webhook_data_creation(username: str, message: str, token_creation_date: str = None, token_expire_date: str = None):
+    return {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary":  username+" is using "+os.getenv("BOARD_NAME"),
+        "sections": [{
+            "activityTitle": username+" is using "+os.getenv("BOARD_NAME")+" since "+token_creation_date,
+            "facts": [
+                {
+                    "name": message,
+                    "value": token_expire_date
+                }
+            ],
+            "markdown": True
+        }]
+    }
+
+
+def webhook_data_release(username: str, message: str = None):
+    return {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary":  username+" just released "+os.getenv("BOARD_NAME"),
+        "sections": [{
+            "activityTitle": username+" just released "+os.getenv("BOARD_NAME"),
+            "facts": [
+                {
+                    "name": message,
+                }
+            ],
+            "markdown": True
+        }]
+    }
+
 
 @app.on_event('startup')
 async def app_startup():
@@ -153,22 +194,7 @@ def create_access_token(input_token: InputToken, response: Response):
             username=input_token.username,
         )
         print("Creation du token : " + str(token))
-        data = {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "themeColor": "0076D7",
-            "summary":  input_token.username+" is using "+os.getenv("BOARD_NAME"),
-            "sections": [{
-                "activityTitle": input_token.username+" is using "+os.getenv("BOARD_NAME"),
-                "facts": [
-                    {
-                        "name": "token claimed untill",
-                        "value": token.expires_date.strftime("%d/%m/%Y %H:%M:%S")
-                    }
-                ],
-                "markdown": True
-            }]
-        }
+        data = webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
         requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -181,22 +207,7 @@ def create_access_token(input_token: InputToken, response: Response):
             expires_date=None,
             username=input_token.username,
         )
-        data = {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "themeColor": "0076D7",
-            "summary":  input_token.username+" is using "+os.getenv("BOARD_NAME"),
-            "sections": [{
-                "activityTitle": input_token.username+" is using "+os.getenv("BOARD_NAME"),
-                "facts": [
-                    {
-                        "name": "token claimed without expiration time",
-                        "value": "Please don't forget to release it :)"
-                    }
-                ],
-                "markdown": True
-            }]
-        }
+        data = webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
         requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -221,17 +232,7 @@ def release_token(response: Response):
         return r
     else:
         print("Last user => " + token.username)
-        data = {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "themeColor": "0076D7",
-            "summary":  token.username+" just released "+os.getenv("BOARD_NAME"),
-            "sections": [{
-                "activityTitle": token.username+" just released "+os.getenv("BOARD_NAME"),
-                "facts": [],
-                "markdown": True
-            }]
-        }
+        data = webhook_data_release(token.username, "The board is free")
         requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
         token = None
         r = StatusResponse(message="Token released", status=True)
@@ -244,21 +245,7 @@ async def token_state():
     global token
     if token is not None and token.expires_date is not None:
         if datetime.now() >= token.expires_date:
-            data = {
-                "@type": "MessageCard",
-                "@context": "http://schema.org/extensions",
-                "themeColor": "0076D7",
-                "summary":  token.username+" just released "+os.getenv("BOARD_NAME"),
-                "sections": [{
-                    "activityTitle": token.username+" just released "+os.getenv("BOARD_NAME"),
-                    "facts": [
-                        {
-                            "name": "token duration expired",
-                        }
-                    ],
-                    "markdown": True
-                }]
-            }
+            data = webhook_data_release(token.username, "token duration expired")
             requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
             token = None
         else:
