@@ -5,6 +5,7 @@ import {Button} from '@material-ui/core';
 import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
 import Slider from '@material-ui/core/Slider';
 import Typography from "@material-ui/core/Typography";
+import axios from "axios";
 
 
 
@@ -40,13 +41,26 @@ const useStyles = makeStyles(() =>
 
 export default function RelayButtons() {
 
-    const [toggleCam, setToggleCam] = useState<boolean>(false);
+    const classes = useStyles();
 
-    const toggleWebcam = () => {
+    const [toggleCam, setToggleCam] = useState<boolean>(false);
+    const [framerateWebcam, setFramerateWebcam] = useState<number>(30);
+
+    const toggleWebcam = (): void => {
         setToggleCam(!toggleCam);
     }
 
-    const classes = useStyles();
+    const onSliderChange = (val: number | number[]) => {
+            setFramerateWebcam(val as number);
+        setTimeout(() => {
+            axios({
+                method: 'post',
+                url: process.env.React_App_URL_API + 'webcam/'+framerateWebcam,
+            })
+                .catch(err => console.error("ERROR =>" + err));
+        }, 1000);
+    }
+
 
     return (
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
@@ -54,7 +68,7 @@ export default function RelayButtons() {
                 ?<div>
                 <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}
                        onClick={toggleWebcam}/>
-                <Typography id="framerate-slider" className={classes.sliderFramerateText} gutterBottom>Webcam framerate </Typography>
+                <Typography id="framerate-slider" className={classes.sliderFramerateText} gutterBottom>Webcam framerate</Typography>
                     <Slider
                         className={classes.webcamSlider}
                         aria-labelledby="framerate-slider"
@@ -63,6 +77,7 @@ export default function RelayButtons() {
                         min={1}
                         max={30}
                         valueLabelDisplay="auto"
+                        onChange={(event, val) => onSliderChange(val)}
                     />
                 </div>
                 : <Button startIcon={<PhotoCameraIcon/>} variant="outlined" color="primary" onClick={toggleWebcam}

@@ -92,6 +92,7 @@ class WebcamRunner:
 
 webcam_runner = WebcamRunner()
 
+
 #
 # Webhook management
 #
