@@ -3,6 +3,9 @@ import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {useState} from "react";
 import {Button} from '@material-ui/core';
 import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
+import Slider from '@material-ui/core/Slider';
+import Typography from "@material-ui/core/Typography";
+
 
 
 const useStyles = makeStyles(() =>
@@ -21,6 +24,16 @@ const useStyles = makeStyles(() =>
             justifyContent: 'center',
             marginTop:300,
             marginBottom:300
+        },
+        webcamSlider: {
+            maxWidth: 500,
+            marginTop: 10,
+            marginBottom:10,
+            marginLeft: 150,
+        },
+        sliderFramerateText: {
+            textAlign: 'center',
+            marginTop: 10,
         }
     }),
 );
@@ -36,10 +49,22 @@ export default function RelayButtons() {
     const classes = useStyles();
 
     return (
-        <Grid container className={classes.root}>
+        <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             {toggleCam
-                ? <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}
+                ?<div>
+                <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}
                        onClick={toggleWebcam}/>
+                <Typography id="framerate-slider" className={classes.sliderFramerateText} gutterBottom>Webcam framerate </Typography>
+                    <Slider
+                        className={classes.webcamSlider}
+                        aria-labelledby="framerate-slider"
+                        defaultValue={30}
+                        step={1}
+                        min={1}
+                        max={30}
+                        valueLabelDisplay="auto"
+                    />
+                </div>
                 : <Button startIcon={<PhotoCameraIcon/>} variant="outlined" color="primary" onClick={toggleWebcam}
                           className={classes.webcamButton}>Camera</Button>
             }
