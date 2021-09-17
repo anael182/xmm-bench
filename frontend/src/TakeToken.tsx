@@ -118,7 +118,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
                                 Token duration : {valueToHoursMinutes(value)}
                             </Typography>
                             <Slider className={classes.slider}
-                                defaultValue={0}
+                                defaultValue={420}
                                 onChange={(event, val) => onSliderChange(val)}
                                 aria-labelledby="discrete-slider"
                                 step={10}

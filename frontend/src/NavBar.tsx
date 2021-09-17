@@ -22,7 +22,7 @@ const useStyles = makeStyles(() =>
         logo: {
             width:80,
         },
-        corpo: {
+        corporation: {
             marginRight:10,
         }
     }),
@@ -54,7 +54,7 @@ export default function NavBar() {
                     <Typography variant="h6" className={classes.title}>
                         {board}
                     </Typography>
-                    <Typography variant="h6" className={classes.corpo}>Korys Technologies</Typography>
+                    <Typography variant="h6" className={classes.corporation}>Korys Technologies</Typography>
             </Toolbar>
             </AppBar>
         </Grid>
