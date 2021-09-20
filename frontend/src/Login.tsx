@@ -4,19 +4,23 @@ import ReleaseToken from "./ReleaseToken";
 import axios from "axios";
 import {Alert} from "@material-ui/lab";
 import useInterval from "./utils/useInterval";
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {createStyles, makeStyles} from "@material-ui/core/styles";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles(() =>
     createStyles({
         alert: {
             justifyContent: 'center',
+            textAlign: 'center',
         },
     }),
 );
 
+
 interface User {
     username: string,
-    token_creation_date: string
+    creation_date: string,
+    expires_date: string
+
 }
 
 export default function Login(): ReactElement {
@@ -54,7 +58,12 @@ export default function Login(): ReactElement {
                 ? <TakeToken refresh={refreshComponent}/>
                 : <div>
                     <Alert severity="success" className={classes.alert}>The board is taken
-                        by {user.username} since {user.token_creation_date} ⌛</Alert>
+                        by {user.username} since {user.creation_date} ⌛.
+                        {user.expires_date != null
+                            ? <span> The token will expire on {user.expires_date}.</span>
+                            : <span> There is no expires date for this token.</span>
+                        }
+                    </Alert>
                     <ReleaseToken refresh={refreshComponent}/>
                 </div>
             }

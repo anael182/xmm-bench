@@ -1,7 +1,11 @@
 import Grid from '@material-ui/core/Grid';
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {createStyles, makeStyles} from "@material-ui/core/styles";
+import {useState} from "react";
+import {Button} from '@material-ui/core';
+import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
 
-const useStyles = makeStyles((theme: Theme) =>
+
+const useStyles = makeStyles(() =>
     createStyles({
         root: {
             display: 'flex',
@@ -9,19 +13,36 @@ const useStyles = makeStyles((theme: Theme) =>
             marginTop: 50,
         },
         webcam: {
-            maxHeight: 600,
-            maxWidth: 800,
+            height: 600,
+            width: 800,
+        },
+        webcamButton: {
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop:300,
+            marginBottom:300
         }
     }),
 );
 
 export default function RelayButtons() {
 
+    const [toggleCam, setToggleCam] = useState<boolean>(false);
+
+    const toggleWebcam = () => {
+        setToggleCam(!toggleCam);
+    }
+
     const classes = useStyles();
 
     return (
         <Grid container className={classes.root}>
-            <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}/>
-        </Grid>
+            {toggleCam
+                ? <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}
+                       onClick={toggleWebcam}/>
+                : <Button startIcon={<PhotoCameraIcon/>} variant="outlined" color="primary" onClick={toggleWebcam}
+                          className={classes.webcamButton}>Camera</Button>
+            }
+            </Grid>
     )
 }

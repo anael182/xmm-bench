@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {createStyles, makeStyles, Theme} from '@material-ui/core/styles';
+import {createStyles, makeStyles} from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -9,7 +9,7 @@ import axios from "axios";
 
 
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles(() =>
     createStyles({
         navbar: {
             width:'auto',
@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme: Theme) =>
         logo: {
             width:80,
         },
-        corpo: {
+        corporation: {
             marginRight:10,
         }
     }),
@@ -54,7 +54,7 @@ export default function NavBar() {
                     <Typography variant="h6" className={classes.title}>
                         {board}
                     </Typography>
-                    <Typography variant="h6" className={classes.corpo}>Korys Technologies</Typography>
+                    <Typography variant="h6" className={classes.corporation}>Korys Technologies</Typography>
             </Toolbar>
             </AppBar>
         </Grid>

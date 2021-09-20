@@ -1,9 +1,9 @@
 import axios from "axios";
 import {Button} from "@material-ui/core";
 import Grid from '@material-ui/core/Grid';
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {createStyles, makeStyles} from "@material-ui/core/styles";
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles(() =>
     createStyles({
         root: {
             marginTop: 40,
@@ -12,23 +12,29 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         flash: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
         },
         power: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
         },
         reboot: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
         },
         cv22boot: {
             marginTop: 5,
-            width: 100
+            width: 110,
+            height:50,
         },
         cv22flash: {
             marginTop: 5,
-            width: 100
+            width: 100,
+            height:50,
+            marginLeft:10,
         },
     }),
 );

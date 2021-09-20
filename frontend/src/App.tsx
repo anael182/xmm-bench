@@ -6,14 +6,14 @@ import NavBar from "./NavBar"
 import InternalServerError from "./errorComponents/InternalServerError";
 import axios from "axios";
 import CircularProgress from '@material-ui/core/CircularProgress';
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {createStyles, makeStyles} from "@material-ui/core/styles";
 import Grid from '@material-ui/core/Grid';
 
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles(() =>
     createStyles({
         loading: {
-            marginTop:'25%',
+            marginTop:'20%',
         },
     }),
 );
@@ -44,7 +44,7 @@ export default function App(): ReactElement {
     if (loading) return (
         <div>
         <NavBar/>
-            <Grid container justify = "center" alignItems="center" className={classes.loading}>
+            <Grid container justifyContent = "center" alignItems="center" className={classes.loading}>
         <CircularProgress size={100}/>
             </Grid>
         </div>

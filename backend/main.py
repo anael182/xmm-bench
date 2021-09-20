@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import FastAPI, Response, status
 from fastapi.responses import StreamingResponse
@@ -32,12 +32,14 @@ class StatusResponse(BaseModel):
     status: bool
 
 
-class User(BaseModel):
+class InputToken(BaseModel):
     username: str
+    token_minutes: Optional[int]
 
 
 class Token(BaseModel):
-    token_creation_date: str
+    creation_date: datetime
+    expires_date: Optional[datetime]
     username: Optional[str] = None
 
 
@@ -45,7 +47,7 @@ class Token(BaseModel):
 # Webcam management
 #
 
-async def AsyncStream(stream):
+async def async_stream(stream):
     import asyncio
     cap = stream.video_capture
     fd = cap.device.fileno()
@@ -76,7 +78,7 @@ class WebcamRunner:
 
     async def run_capture(self):
         if self.cam:
-            async for frame in AsyncStream(v4l2py.device.VideoStream(self.cam.video_capture)):
+            async for frame in async_stream(v4l2py.device.VideoStream(self.cam.video_capture)):
                 self.current = frame
 
     async def video_streamer(self):
@@ -89,6 +91,49 @@ class WebcamRunner:
 
 
 webcam_runner = WebcamRunner()
+
+#
+# Webhook management
+#
+
+
+def webhook_data_creation(username: str, message: str, token_creation_date: str = None, token_expire_date: str = None):
+    data = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary":  username+" is using "+os.getenv("BOARD_NAME"),
+        "sections": [{
+            "activityTitle": username+" is using "+os.getenv("BOARD_NAME")+" since "+token_creation_date,
+            "facts": [
+                {
+                    "name": message,
+                    "value": token_expire_date
+                }
+            ],
+            "markdown": True
+        }]
+    }
+    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+
+
+def webhook_data_release(username: str, message: str = None):
+    data = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary":  username+" just released "+os.getenv("BOARD_NAME"),
+        "sections": [{
+            "activityTitle": username+" just released "+os.getenv("BOARD_NAME"),
+            "facts": [
+                {
+                    "name": message,
+                }
+            ],
+            "markdown": True
+        }]
+    }
+    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
 @app.on_event('startup')
@@ -116,18 +161,18 @@ XMM_RELAY_BIN = os.getenv("XMM_RELAY_BIN", "/home/korys/bin/xmm_relay")
 @app.post("/relay/{name}")
 # http://127.0.0.1:8000/relay/
 def toggle_relay(name: str):
-    if (name == 'flash'):
+    if name == 'flash':
         r = subprocess.run([XMM_RELAY_BIN, "-f"])
-    elif (name == 'power'):
+    elif name == 'power':
         r = subprocess.run([XMM_RELAY_BIN, "-p"])
-    elif (name == 'reboot'):
+    elif name == 'reboot':
         r = subprocess.run([XMM_RELAY_BIN, "-r"])
-    elif (name == 'cv22boot'):
+    elif name == 'cv22boot':
         r = subprocess.run([XMM_RELAY_BIN, "-c"])
-    elif (name == 'cv22flash'):
+    elif name == 'cv22flash':
         r = subprocess.run([XMM_RELAY_BIN, "-v"])
 
-    r = StatusResponse(message=r.stdout, status=r.returncode == 0)
+    r = StatusResponse(message="", status=r.returncode == 0)
     return r
 
 
@@ -142,42 +187,39 @@ token = None
 @app.post("/reservation/take")
 # http://127.0.0.1:8000/reservation/take
 # JSON INPUT EXAMPLE {"username" : "Johndoe"}
-def create_access_token(user: User, response: Response):
+def create_access_token(input_token: InputToken, response: Response):
     global token
-    now = datetime.now()
-    if token is None:
+    if token is None and input_token.token_minutes is not None:
         token = Token(
-            access_token="im_the_token",
-            token_creation_date=str(now.strftime("%d/%m/%Y %H:%M:%S")),
-            username=user.username,
+            creation_date=datetime.now(),
+            expires_date=datetime.now()+timedelta(minutes=input_token.token_minutes),
+            username=input_token.username,
         )
         print("Creation du token : " + str(token))
-        data = {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "themeColor": "0076D7",
-            "summary":  user.username+" is using "+os.getenv("BOARD_NAME"),
-            "sections": [{
-                "activityTitle": user.username+" is using "+os.getenv("BOARD_NAME"),
-                "facts": [],
-                "markdown": True
-            }]
+        webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
         }
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
-        return token
+    elif token is None and input_token.token_minutes is None:
+        token = Token(
+            creation_date=datetime.now(),
+            expires_date=None,
+            username=input_token.username,
+        )
+        webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'expires_date': None,
+            'username': token.username,
+        }
     else:
         response.status_code = status.HTTP_409_CONFLICT
         r = StatusResponse(
             message="Token is already taken by " + token.username, status=False
         )
         return r
-
-
-@app.get("/reservation/state")
-# http://127.0.0.1:8000/reservation/state
-async def token_state():
-    global token
-    return token
 
 
 @app.post("/reservation/release")
@@ -190,22 +232,34 @@ def release_token(response: Response):
         return r
     else:
         print("Last user => " + token.username)
-        now = datetime.now()
-        data = {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "themeColor": "0076D7",
-            "summary":  token.username+" just released "+os.getenv("BOARD_NAME"),
-            "sections": [{
-                "activityTitle": token.username+" just released "+os.getenv("BOARD_NAME"),
-                "facts": [],
-                "markdown": True
-            }]
-        }
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+        webhook_data_release(token.username, "The board is free")
         token = None
         r = StatusResponse(message="Token released", status=True)
         return r
+
+
+@app.get("/reservation/state")
+# http://127.0.0.1:8000/reservation/state
+async def token_state():
+    global token
+    if token is not None and token.expires_date is not None:
+        if datetime.now() >= token.expires_date:
+            webhook_data_release(token.username, "token duration expired")
+            token = None
+            return None
+        else:
+            return {
+                'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+                'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
+                'username': token.username,
+            }
+    elif token is not None and token.expires_date is None:
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
+        }
+    else:
+        return None
 
 
 @app.get("/board")
