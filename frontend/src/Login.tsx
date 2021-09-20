@@ -56,21 +56,16 @@ export default function Login(): ReactElement {
         <div>
             {user === null
                 ? <TakeToken refresh={refreshComponent}/>
-                :
-                (user.expires_date != null)
-                        ?
-                    <div>
-                        <Alert severity="success" className={classes.alert}>The board is taken
-                            by {user.username} since {user.creation_date} ⌛. The token will expire
-                            on {user.expires_date}.</Alert>
-                        <ReleaseToken refresh={refreshComponent}/>
-                    </div>
-                        :
-                        <div>
-                            <Alert severity="success" className={classes.alert}>The board is taken
-                                by {user.username} since {user.creation_date} ⌛. Their is no expires date for this token.</Alert>
-                            <ReleaseToken refresh={refreshComponent}/>
-                        </div>
+                : <div>
+                    <Alert severity="success" className={classes.alert}>The board is taken
+                        by {user.username} since {user.creation_date} ⌛.
+                        {user.expires_date != null
+                            ? <span> The token will expire on {user.expires_date}.</span>
+                            : <span> There is no expires date for this token.</span>
+                        }
+                    </Alert>
+                    <ReleaseToken refresh={refreshComponent}/>
+                </div>
             }
         </div>
     );

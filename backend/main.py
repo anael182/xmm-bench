@@ -98,7 +98,7 @@ webcam_runner = WebcamRunner()
 
 
 def webhook_data_creation(username: str, message: str, token_creation_date: str = None, token_expire_date: str = None):
-    return {
+    data = {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
@@ -114,10 +114,11 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
             "markdown": True
         }]
     }
+    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
 def webhook_data_release(username: str, message: str = None):
-    return {
+    data = {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
@@ -132,6 +133,7 @@ def webhook_data_release(username: str, message: str = None):
             "markdown": True
         }]
     }
+    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
 @app.on_event('startup')
@@ -194,8 +196,7 @@ def create_access_token(input_token: InputToken, response: Response):
             username=input_token.username,
         )
         print("Creation du token : " + str(token))
-        data = webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+        webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -207,8 +208,7 @@ def create_access_token(input_token: InputToken, response: Response):
             expires_date=None,
             username=input_token.username,
         )
-        data = webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+        webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': None,
@@ -232,8 +232,7 @@ def release_token(response: Response):
         return r
     else:
         print("Last user => " + token.username)
-        data = webhook_data_release(token.username, "The board is free")
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+        webhook_data_release(token.username, "The board is free")
         token = None
         r = StatusResponse(message="Token released", status=True)
         return r
@@ -245,9 +244,9 @@ async def token_state():
     global token
     if token is not None and token.expires_date is not None:
         if datetime.now() >= token.expires_date:
-            data = webhook_data_release(token.username, "token duration expired")
-            requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+            webhook_data_release(token.username, "token duration expired")
             token = None
+            return None
         else:
             return {
                 'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
