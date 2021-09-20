@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response, status, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ import os
 import subprocess
 import asyncio
 import v4l2py
+import time
 
 
 app = FastAPI()
@@ -103,9 +104,9 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
-        "summary":  username+" is using "+os.getenv("BOARD_NAME"),
+        "summary":  username+" is using "+os.getenv("BOARD_NAME", ""),
         "sections": [{
-            "activityTitle": username+" is using "+os.getenv("BOARD_NAME")+" since "+token_creation_date,
+            "activityTitle": username+" is using "+os.getenv("BOARD_NAME", "")+" since "+token_creation_date,
             "facts": [
                 {
                     "name": message,
@@ -123,9 +124,9 @@ def webhook_data_release(username: str, message: str = None):
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
-        "summary":  username+" just released "+os.getenv("BOARD_NAME"),
+        "summary":  username+" just released "+os.getenv("BOARD_NAME", ""),
         "sections": [{
-            "activityTitle": username+" just released "+os.getenv("BOARD_NAME"),
+            "activityTitle": username+" just released "+os.getenv("BOARD_NAME", ""),
             "facts": [
                 {
                     "name": message,
@@ -136,6 +137,15 @@ def webhook_data_release(username: str, message: str = None):
     }
     requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
+
+def check_token_expiration():
+    global token
+    while True and token is not None:
+        if datetime.now() < token.expires_date:
+            time.sleep(1)
+        elif datetime.now() >= token.expires_date:
+            webhook_data_release(token.username, "token duration expired")
+            token = None
 
 @app.on_event('startup')
 async def app_startup():
@@ -149,6 +159,12 @@ async def webcam():
         webcam_runner.video_streamer(),
         media_type="multipart/x-mixed-replace; boundary=--jpgboundary",
     )
+
+
+@app.get("/webcam/{fps}")
+# http://127.0.0.1:8000/webcam/
+async def webcam(fps: int):
+    return {"framerate": fps}
 
 
 #
@@ -241,19 +257,23 @@ def release_token(response: Response):
 
 @app.get("/reservation/state")
 # http://127.0.0.1:8000/reservation/state
-async def token_state():
+async def token_state(background_task: BackgroundTasks):
     global token
     if token is not None and token.expires_date is not None:
-        if datetime.now() >= token.expires_date:
-            webhook_data_release(token.username, "token duration expired")
-            token = None
-            return None
+        background_task.add_task(check_token_expiration)
+        return None
         else:
             return {
                 'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
                 'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
                 'username': token.username,
             }
+        background_task.add_task(check_token_expiration)
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
+        }
     elif token is not None and token.expires_date is None:
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -266,4 +286,6 @@ async def token_state():
 @app.get("/board")
 # http://127.0.0.1:8000/board
 def get_board():
-    return {"board_name": os.getenv("BOARD_NAME")}
+    return {"board_name": os.getenv("BOARD_NAME", "")}
+
+
