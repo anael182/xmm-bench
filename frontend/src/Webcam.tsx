@@ -50,16 +50,14 @@ export default function RelayButtons() {
         setToggleCam(!toggleCam);
     }
 
-    /*const onSliderChange = (val: number | number[]) => {
+    const onSliderChange = (val: number | number[]) => {
             setFramerateWebcam(val as number);
-        setTimeout(() => {
             axios({
                 method: 'post',
                 url: process.env.React_App_URL_API + 'webcam/'+framerateWebcam,
             })
                 .catch(err => console.error("ERROR =>" + err));
-        }, 1000);
-    }*/
+        }
 
 
     return (
@@ -77,7 +75,7 @@ export default function RelayButtons() {
                         min={1}
                         max={30}
                         valueLabelDisplay="auto"
-                        //onChange={(event, val) => onSliderChange(val)}
+                        onChange={(event, val) => onSliderChange(val)}
                     />
                 </div>
                 : <Button startIcon={<PhotoCameraIcon/>} variant="outlined" color="primary" onClick={toggleWebcam}

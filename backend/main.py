@@ -100,7 +100,7 @@ webcam_runner = WebcamRunner()
 
 
 def webhook_data_creation(username: str, message: str, token_creation_date: str = None, token_expire_date: str = None):
-    data = {
+    return {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
@@ -116,11 +116,10 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
             "markdown": True
         }]
     }
-    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
 def webhook_data_release(username: str, message: str = None):
-    data = {
+    return {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
@@ -135,7 +134,6 @@ def webhook_data_release(username: str, message: str = None):
             "markdown": True
         }]
     }
-    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
 def check_token_expiration():
@@ -144,15 +142,17 @@ def check_token_expiration():
         if datetime.now() < token.expires_date:
             time.sleep(1)
         elif datetime.now() >= token.expires_date:
-            webhook_data_release(token.username, "token duration expired")
+            data = webhook_data_release(token.username, "token duration expired")
             token = None
+            requests.post(url=os.getenv("WEBHOOK_URL", ""), json=data)
+
 
 @app.on_event('startup')
 async def app_startup():
     asyncio.create_task(webcam_runner.run_capture())
 
 
-@app.get("/webcam")
+@app.get("/webcam/")
 # http://127.0.0.1:8000/webcam/
 async def webcam():
     return StreamingResponse(
@@ -161,10 +161,10 @@ async def webcam():
     )
 
 
-@app.get("/webcam/{fps}")
+@app.post("/webcam/{fps}")
 # http://127.0.0.1:8000/webcam/
-async def webcam(fps: int):
-    return {"framerate": fps}
+async def webcam_framerate(fps: int):
+    return {'framerate': fps}
 
 
 #
@@ -213,7 +213,8 @@ def create_access_token(input_token: InputToken, response: Response):
             username=input_token.username,
         )
         print("Creation du token : " + str(token))
-        webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
+        data = webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
+        requests.post(url=os.getenv("WEBHOOK_URL", ""), json=data)
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -225,7 +226,8 @@ def create_access_token(input_token: InputToken, response: Response):
             expires_date=None,
             username=input_token.username,
         )
-        webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
+        data = webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
+        requests.post(url=os.getenv("WEBHOOK_URL", ""), json=data)
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': None,
@@ -249,7 +251,8 @@ def release_token(response: Response):
         return r
     else:
         print("Last user => " + token.username)
-        webhook_data_release(token.username, "The board is free")
+        data = webhook_data_release(token.username, "The board is free")
+        requests.post(url=os.getenv("WEBHOOK_URL", "http://"), json=data)
         token = None
         r = StatusResponse(message="Token released", status=True)
         return r
@@ -261,30 +264,21 @@ async def token_state(background_task: BackgroundTasks):
     global token
     if token is not None and token.expires_date is not None:
         background_task.add_task(check_token_expiration)
-        else:
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
             'username': token.username,
         }
-    background_task.add_task(check_token_expiration)
-    return {
-        'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
-        'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
-        'username': token.username,
-    }
-elif token is not None and token.expires_date is None:
-return {
-    'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
-    'username': token.username,
-}
-else:
-return None
+    elif token is not None and token.expires_date is None:
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
+        }
+    else:
+        return None
 
 
 @app.get("/board")
 # http://127.0.0.1:8000/board
 def get_board():
     return {"board_name": os.getenv("BOARD_NAME", "")}
-
-
