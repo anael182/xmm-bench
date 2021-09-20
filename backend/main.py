@@ -154,7 +154,7 @@ async def app_startup():
 
 @app.get("/webcam")
 # http://127.0.0.1:8000/webcam/
-async def webcam():
+def webcam():
     return StreamingResponse(
         webcam_runner.video_streamer(),
         media_type="multipart/x-mixed-replace; boundary=--jpgboundary",
