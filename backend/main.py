@@ -152,7 +152,7 @@ async def app_startup():
     asyncio.create_task(webcam_runner.run_capture())
 
 
-@app.get("/webcam/")
+@app.get("/webcam")
 # http://127.0.0.1:8000/webcam/
 async def webcam():
     return StreamingResponse(
@@ -282,3 +282,5 @@ async def token_state(background_task: BackgroundTasks):
 # http://127.0.0.1:8000/board
 def get_board():
     return {"board_name": os.getenv("BOARD_NAME", "")}
+
+
