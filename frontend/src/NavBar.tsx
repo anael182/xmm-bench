@@ -32,12 +32,13 @@ export default function NavBar() {
 
     const classes = useStyles();
 
-    const [board, setBoard] = useState<string>('');
+    const [board, setBoard] = useState<string>("");
 
     const getBoardName = async (): Promise<void> => {
         const result = await axios(process.env.React_App_URL_API + "board");
-        setBoard(result.data.board_name);
-
+        if (result.data.board_name != null) {
+            setBoard(result.data.board_name);
+        }
     }
 
     useEffect((): void => {

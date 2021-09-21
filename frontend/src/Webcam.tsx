@@ -5,8 +5,6 @@ import {Button} from '@material-ui/core';
 import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
 import Slider from '@material-ui/core/Slider';
 import Typography from "@material-ui/core/Typography";
-import axios from "axios";
-
 
 
 const useStyles = makeStyles(() =>
@@ -51,20 +49,14 @@ export default function RelayButtons() {
     }
 
     const onSliderChange = (val: number | number[]) => {
-            setFramerateWebcam(val as number);
-            axios({
-                method: 'post',
-                url: process.env.React_App_URL_API + 'webcam/'+framerateWebcam,
-            })
-                .catch(err => console.error("ERROR =>" + err));
-        }
-
+        setFramerateWebcam(val as number);
+    }
 
     return (
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             {toggleCam
                 ?<div>
-                <img src={process.env.React_App_URL_API + 'webcam'} alt="webcam" className={classes.webcam}
+                <img src={process.env.React_App_URL_API + 'webcam/'+framerateWebcam} alt="webcam" className={classes.webcam}
                        onClick={toggleWebcam}/>
                 <Typography id="framerate-slider" className={classes.sliderFramerateText} gutterBottom>Webcam framerate</Typography>
                     <Slider

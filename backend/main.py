@@ -10,7 +10,6 @@ import os
 import subprocess
 import asyncio
 import v4l2py
-import time
 
 
 app = FastAPI()
@@ -82,11 +81,11 @@ class WebcamRunner:
             async for frame in async_stream(v4l2py.device.VideoStream(self.cam.video_capture)):
                 self.current = frame
 
-    async def video_streamer(self):
+    async def video_streamer(self, fps: int):
         if self.cam:
             while True:
                 yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+self.current
-                await asyncio.sleep(1/30)
+                await asyncio.sleep(1/fps)
         else:
             yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+open('images/image.jpeg', 'rb').read()
 
@@ -116,7 +115,8 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
             "markdown": True
         }]
     }
-    requests.post(url=os.getenv("WEBHOOK_URL", ""), json=data)
+    if os.getenv("WEBHOOK_URL") is not None:
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
 def webhook_data_release(username: str, message: str = None):
@@ -135,37 +135,32 @@ def webhook_data_release(username: str, message: str = None):
             "markdown": True
         }]
     }
-    requests.post(url=os.getenv("WEBHOOK_URL", ""), json=data)
+    if os.getenv("WEBHOOK_URL") is not None:
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
-
-def check_token_expiration():
+async def check_token_expiration():
     global token
     while True and token is not None:
         if datetime.now() < token.expires_date:
-            time.sleep(1)
+            await asyncio.sleep(1)
         elif datetime.now() >= token.expires_date:
             webhook_data_release(token.username, "token duration expired")
             token = None
+
 
 @app.on_event('startup')
 async def app_startup():
     asyncio.create_task(webcam_runner.run_capture())
 
 
-@app.get("/webcam")
+@app.get("/webcam/{fps}")
 # http://127.0.0.1:8000/webcam/
-def webcam():
+def webcam(fps: int):
     return StreamingResponse(
-        webcam_runner.video_streamer(),
+        webcam_runner.video_streamer(fps),
         media_type="multipart/x-mixed-replace; boundary=--jpgboundary",
     )
-
-
-@app.post("/webcam/{fps}")
-# http://127.0.0.1:8000/webcam/
-async def webcam_framerate(fps: int):
-    return {'framerate': fps}
 
 
 #
@@ -227,7 +222,6 @@ def create_access_token(input_token: InputToken, response: Response):
             username=input_token.username,
         )
         webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
-
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': None,
@@ -259,10 +253,9 @@ def release_token(response: Response):
 
 @app.get("/reservation/state")
 # http://127.0.0.1:8000/reservation/state
-async def token_state(background_task: BackgroundTasks):
+async def token_state():
     global token
     if token is not None and token.expires_date is not None:
-        background_task.add_task(check_token_expiration)
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -279,7 +272,12 @@ async def token_state(background_task: BackgroundTasks):
 
 @app.get("/board")
 # http://127.0.0.1:8000/board
-def get_board():
-    return {"board_name": os.getenv("BOARD_NAME", "")}
+def get_board(background_task: BackgroundTasks):
+    background_task.add_task(check_token_expiration)
+    if os.getenv("BOARD_NAME") is not None:
+        return {"board_name": os.getenv("BOARD_NAME")}
+    else:
+        return {"board_name": None}
+
 
 
