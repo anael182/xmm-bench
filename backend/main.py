@@ -105,7 +105,7 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
         "themeColor": "0076D7",
         "summary":  username+" is using "+os.getenv("BOARD_NAME", ""),
         "sections": [{
-            "activityTitle": username+" is using "+os.getenv("BOARD_NAME", "")+" since "+token_creation_date,
+            "activityTitle": username+" is using "+os.getenv("BOARD_NAME")+" since "+token_creation_date,
             "facts": [
                 {
                     "name": message,
@@ -124,9 +124,9 @@ def webhook_data_release(username: str, message: str = None):
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
-        "summary":  username+" just released "+os.getenv("BOARD_NAME", ""),
+        "summary":  username+" just released "+os.getenv("BOARD_NAME"),
         "sections": [{
-            "activityTitle": username+" just released "+os.getenv("BOARD_NAME", ""),
+            "activityTitle": username+" just released "+os.getenv("BOARD_NAME"),
             "facts": [
                 {
                     "name": message,
@@ -141,10 +141,10 @@ def webhook_data_release(username: str, message: str = None):
 
 async def check_token_expiration():
     global token
-    while True and token is not None:
-        if datetime.now() < token.expires_date:
+    while True:
+        if token is None or (token and datetime.now() < token.expires_date):
             await asyncio.sleep(1)
-        elif datetime.now() >= token.expires_date:
+        elif token and datetime.now() >= token.expires_date:
             webhook_data_release(token.username, "token duration expired")
             token = None
 
@@ -152,6 +152,7 @@ async def check_token_expiration():
 @app.on_event('startup')
 async def app_startup():
     asyncio.create_task(webcam_runner.run_capture())
+    asyncio.create_task(check_token_expiration())
 
 
 @app.get("/webcam/{fps}")
@@ -272,8 +273,7 @@ async def token_state():
 
 @app.get("/board")
 # http://127.0.0.1:8000/board
-def get_board(background_task: BackgroundTasks):
-    background_task.add_task(check_token_expiration)
+def get_board():
     if os.getenv("BOARD_NAME") is not None:
         return {"board_name": os.getenv("BOARD_NAME")}
     else:
