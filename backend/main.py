@@ -142,9 +142,8 @@ def webhook_data_release(username: str, message: str = None):
 async def check_token_expiration():
     global token
     while True:
-        if token is None or (token and datetime.now() < token.expires_date):
-            await asyncio.sleep(1)
-        elif token and datetime.now() >= token.expires_date:
+        await asyncio.sleep(1)
+        if token and datetime.now() >= token.expires_date:
             webhook_data_release(token.username, "token duration expired")
             token = None
 
