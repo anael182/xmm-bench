@@ -20,3 +20,4 @@ __pycache__
 .idea
 
 /frontend/build
+react-app-env.d.ts
