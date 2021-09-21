@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response, status, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -81,16 +81,17 @@ class WebcamRunner:
             async for frame in async_stream(v4l2py.device.VideoStream(self.cam.video_capture)):
                 self.current = frame
 
-    async def video_streamer(self):
+    async def video_streamer(self, fps: int):
         if self.cam:
             while True:
                 yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+self.current
-                await asyncio.sleep(1/30)
+                await asyncio.sleep(1/fps)
         else:
             yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+open('images/image.jpeg', 'rb').read()
 
 
 webcam_runner = WebcamRunner()
+
 
 #
 # Webhook management
@@ -102,7 +103,7 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
-        "summary":  username+" is using "+os.getenv("BOARD_NAME"),
+        "summary":  username+" is using "+os.getenv("BOARD_NAME", ""),
         "sections": [{
             "activityTitle": username+" is using "+os.getenv("BOARD_NAME")+" since "+token_creation_date,
             "facts": [
@@ -114,7 +115,8 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
             "markdown": True
         }]
     }
-    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+    if os.getenv("WEBHOOK_URL") is not None:
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
 def webhook_data_release(username: str, message: str = None):
@@ -133,19 +135,30 @@ def webhook_data_release(username: str, message: str = None):
             "markdown": True
         }]
     }
-    requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+    if os.getenv("WEBHOOK_URL") is not None:
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+
+
+async def check_token_expiration():
+    global token
+    while True:
+        await asyncio.sleep(1)
+        if token and datetime.now() >= token.expires_date:
+            webhook_data_release(token.username, "token duration expired")
+            token = None
 
 
 @app.on_event('startup')
 async def app_startup():
     asyncio.create_task(webcam_runner.run_capture())
+    asyncio.create_task(check_token_expiration())
 
 
-@app.get("/webcam")
+@app.get("/webcam/{fps}")
 # http://127.0.0.1:8000/webcam/
-async def webcam():
+def webcam(fps: int):
     return StreamingResponse(
-        webcam_runner.video_streamer(),
+        webcam_runner.video_streamer(fps),
         media_type="multipart/x-mixed-replace; boundary=--jpgboundary",
     )
 
@@ -243,16 +256,11 @@ def release_token(response: Response):
 async def token_state():
     global token
     if token is not None and token.expires_date is not None:
-        if datetime.now() >= token.expires_date:
-            webhook_data_release(token.username, "token duration expired")
-            token = None
-            return None
-        else:
-            return {
-                'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
-                'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
-                'username': token.username,
-            }
+        return {
+            'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
+            'username': token.username,
+        }
     elif token is not None and token.expires_date is None:
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -265,4 +273,10 @@ async def token_state():
 @app.get("/board")
 # http://127.0.0.1:8000/board
 def get_board():
-    return {"board_name": os.getenv("BOARD_NAME")}
+    if os.getenv("BOARD_NAME") is not None:
+        return {"board_name": os.getenv("BOARD_NAME")}
+    else:
+        return {"board_name": None}
+
+
+
