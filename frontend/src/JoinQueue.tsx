@@ -36,7 +36,7 @@ export default function JoinQueue(props: LoginProps) {
             axios({
                 method: 'post',
                 url: process.env.React_App_URL_API + "reservation/joinq",
-                data: {username: e.currentTarget.username.value, token_minutes: '30'}
+                data: {username: e.currentTarget.username.value, token_minutes: 30}
             })
                 .then(() => {
                     props.refresh();
