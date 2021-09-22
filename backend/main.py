@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import FastAPI, Response, status, BackgroundTasks
+from fastapi import FastAPI, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,11 +10,10 @@ import os
 import subprocess
 import asyncio
 import v4l2py
-
+from collections import deque
 
 app = FastAPI()
 load_dotenv()
-
 
 origins = ["*"]
 
@@ -39,13 +38,14 @@ class InputToken(BaseModel):
 
 class Token(BaseModel):
     creation_date: datetime
+    username: str
     expires_date: Optional[datetime]
-    username: Optional[str] = None
 
 
 #
 # Webcam management
 #
+
 
 async def async_stream(stream):
     import asyncio
@@ -84,10 +84,10 @@ class WebcamRunner:
     async def video_streamer(self, fps: int):
         if self.cam:
             while True:
-                yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+self.current
-                await asyncio.sleep(1/fps)
+                yield b"--jpgboundary\r\n" + b'Content-Type: image/jpeg\r\n\r\n' + self.current
+                await asyncio.sleep(1 / fps)
         else:
-            yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+open('images/image.jpeg', 'rb').read()
+            yield b"--jpgboundary\r\n" + b'Content-Type: image/jpeg\r\n\r\n' + open('images/image.jpeg', 'rb').read()
 
 
 webcam_runner = WebcamRunner()
@@ -103,9 +103,9 @@ def webhook_data_creation(username: str, message: str, token_creation_date: str 
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
-        "summary":  username+" is using "+os.getenv("BOARD_NAME", ""),
+        "summary": username + " is using " + os.getenv("BOARD_NAME", ""),
         "sections": [{
-            "activityTitle": username+" is using "+os.getenv("BOARD_NAME")+" since "+token_creation_date,
+            "activityTitle": username + " is using " + os.getenv("BOARD_NAME") + " since " + token_creation_date,
             "facts": [
                 {
                     "name": message,
@@ -124,9 +124,9 @@ def webhook_data_release(username: str, message: str = None):
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
-        "summary":  username+" just released "+os.getenv("BOARD_NAME"),
+        "summary": username + " just released " + os.getenv("BOARD_NAME"),
         "sections": [{
-            "activityTitle": username+" just released "+os.getenv("BOARD_NAME"),
+            "activityTitle": username + " just released " + os.getenv("BOARD_NAME"),
             "facts": [
                 {
                     "name": message,
@@ -193,8 +193,20 @@ def toggle_relay(name: str):
 # Token
 #
 
-
 token = None
+
+#
+# Queue
+#
+
+queue = deque()
+
+# key will be username and value will be token's duration claimed
+# when token fade, I want to pop last user and make the next on the list get the first key
+# queued_users = {
+#     1: ["John", 30],
+#     2: ["Bounty", 10]
+# }
 
 
 @app.post("/reservation/take")
@@ -205,11 +217,13 @@ def create_access_token(input_token: InputToken, response: Response):
     if token is None and input_token.token_minutes is not None:
         token = Token(
             creation_date=datetime.now(),
-            expires_date=datetime.now()+timedelta(minutes=input_token.token_minutes),
+            expires_date=datetime.now() + timedelta(minutes=input_token.token_minutes),
             username=input_token.username,
         )
         print("Creation du token : " + str(token))
-        webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
+        webhook_data_creation(input_token.username, "token claimed untill",
+                              token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+                              token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -221,7 +235,8 @@ def create_access_token(input_token: InputToken, response: Response):
             expires_date=None,
             username=input_token.username,
         )
-        webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
+        webhook_data_creation(input_token.username, "No expiration time",
+                              token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': None,
@@ -270,6 +285,27 @@ async def token_state():
         return None
 
 
+@app.post("/reservation/joinq")
+def queue_management(input_token: InputToken):
+    global queue
+    queue.append(input_token)
+    print(queue)
+    return {"input_token": input_token, "Queue_position": len(queue)}
+
+
+@app.post("/reservation/leaveq")
+def queue_management():
+    global queue
+    if queue:
+        queue.popleft()
+        print(queue)
+        return {"Queue_length": len(queue)}
+    else:
+        r = StatusResponse(message="The queue is empty", status=True)
+        return r
+
+
+
 @app.get("/board")
 # http://127.0.0.1:8000/board
 def get_board():
@@ -277,6 +313,3 @@ def get_board():
         return {"board_name": os.getenv("BOARD_NAME")}
     else:
         return {"board_name": None}
-
-
-

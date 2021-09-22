@@ -5,12 +5,22 @@ import axios from "axios";
 import {Alert} from "@material-ui/lab";
 import useInterval from "./utils/useInterval";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
+import JoinQueue from "./JoinQueue";
+import LeaveQueue from "./LeaveQueue";
 
 const useStyles = makeStyles(() =>
     createStyles({
         alert: {
             justifyContent: 'center',
             textAlign: 'center',
+        },
+        form:{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: 'space-evenly',
+            alignItems: "center",
+            minWidth:700,
+            paddingTop:20
         },
     }),
 );
@@ -20,7 +30,6 @@ interface User {
     username: string,
     creation_date: string,
     expires_date: string
-
 }
 
 export default function Login(): ReactElement {
@@ -64,6 +73,8 @@ export default function Login(): ReactElement {
                             : <span> There is no expires date for this token.</span>
                         }
                     </Alert>
+                    <JoinQueue refresh={refreshComponent}/>
+                    <LeaveQueue refresh={refreshComponent}/>
                     <ReleaseToken refresh={refreshComponent}/>
                 </div>
             }
