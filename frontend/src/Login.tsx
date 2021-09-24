@@ -5,8 +5,7 @@ import axios from "axios";
 import {Alert} from "@material-ui/lab";
 import useInterval from "./utils/useInterval";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
-import JoinQueue from "./JoinQueue";
-import LeaveQueue from "./LeaveQueue";
+import Queue from "./Queue";
 
 const useStyles = makeStyles(() =>
     createStyles({
@@ -76,8 +75,7 @@ export default function Login(): ReactElement {
                             : <span> There is no expires date for this token.</span>
                         }
                     </Alert>
-                    <JoinQueue refresh={refreshComponent}/>
-                    <LeaveQueue refresh={refreshComponent}/>
+                    <Queue refresh={refreshComponent}/>
                     <ReleaseToken refresh={refreshComponent}/>
                 </div>
             }

@@ -15,8 +15,8 @@ const useStyles = makeStyles(() =>
             marginTop: 50,
         },
         webcam: {
-            height: 600,
-            width: 800,
+            maxHeight: 600,
+            maxWidth: 800,
         },
         webcamButton: {
             display: 'flex',

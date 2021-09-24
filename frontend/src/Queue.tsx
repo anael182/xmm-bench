@@ -12,7 +12,7 @@ const useStyles = makeStyles(() =>
         button: {
             width:150,
             border:'solid 1px solid',
-            marginTop:10,
+            marginTop:5,
         },
         form:{
             display: "flex",
@@ -67,11 +67,12 @@ interface LoginProps {
     refresh: () => void;
 }
 
-export default function JoinQueue(props: LoginProps): ReactElement {
+export default function Queue(props: LoginProps): ReactElement {
 
     const classes = useStyles();
 
     const [value, setValue] = useState<number | null>(120);
+    const [username, setUsername] = useState('')
 
     const onSliderChange = (val: number | number[]) => {
         if (val > 360 ){
@@ -87,13 +88,27 @@ export default function JoinQueue(props: LoginProps): ReactElement {
             axios({
                 method: 'post',
                 url: process.env.React_App_URL_API + "reservation/joinq",
-                data: {username: e.currentTarget.username.value, token_minutes: value}
+                data: {username: e.target.username.value, token_minutes: value}
             })
                 .then(() => {
                     props.refresh();
                 })
                 .catch(err => console.error("ERROR =>" + err));
         }
+    }
+
+    const handleLeaveQueue = (e: any): void => {
+        e.preventDefault();
+        console.log(username);
+            axios({
+                method: 'post',
+                url: process.env.React_App_URL_API + "reservation/leaveq",
+                data: {username: username}
+            })
+                .then(() => {
+                    props.refresh();
+                })
+                .catch(err => console.error("ERROR =>" + err));
     }
 
     const valueToHoursMinutes = (value :number | null) : string => {
@@ -110,8 +125,8 @@ export default function JoinQueue(props: LoginProps): ReactElement {
         <Box display="flex" justifyContent="center">
             <form onSubmit={handleJoinQueue}>
                 <div className={classes.form}>
-            <TextField id="outlined-basic" label="Username" name="username" autoFocus={true}
-                       variant="outlined"/>
+                    <TextField id="outlined-basic" label="Username" name="username" autoFocus={true}
+                       variant="outlined" onChange={event => setUsername(event.target.value)}/>
                     <Typography id="discrete-slider" gutterBottom className={classes.sliderCounter}>
                         Token duration : {valueToHoursMinutes(value)}
                     </Typography>
@@ -124,9 +139,10 @@ export default function JoinQueue(props: LoginProps): ReactElement {
                             min={10}
                             max={420}
                     />
-        <Button variant="contained" color='primary' fullWidth={true} className={classes.button} type="submit">Join Queue</Button>
-            </div>
+                    <Button variant="contained" color='primary' fullWidth={true} className={classes.button} type="submit">Join Queue</Button>
+                    <Button variant="contained" color="secondary" fullWidth={true} className={classes.button} onClick={handleLeaveQueue}>Leave Queue</Button>
+                </div>
             </form>
-            </Box>
+        </Box>
     )
 }

@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
+
+import v4l2py
 from fastapi import FastAPI, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -9,7 +11,6 @@ from dotenv import load_dotenv
 import os
 import subprocess
 import asyncio
-import v4l2py
 from collections import deque
 
 app = FastAPI()
@@ -272,11 +273,11 @@ def release_token(response: Response):
         return r
     else:
         print("Last user => " + token.username)
+        token.expires_date = token.creation_date
         if len(queue) == 0:
             webhook_data_release(token.username, "The board is free")
-            token = None
-        r = StatusResponse(message="Token released", status=True)
-        return r
+    r = StatusResponse(message="Token released", status=True)
+    return r
 
 
 @app.get("/reservation/state")
@@ -307,16 +308,32 @@ def queue_management(input_token: InputToken):
 
 
 @app.post("/reservation/leaveq")
-def queue_management():
+def queue_management(input_token: InputToken):
     global queue
+    i = 0
     if len(queue) >= 1:
-        queue.popleft()
-        print(list(queue))
-        return {"Queue_length": len(queue)}
+        while i < (len(queue)-1):
+            if queue[i].username == input_token.username:
+                print(f"{input_token.username} has left the queue.")
+                data = {
+                    "@type": "MessageCard",
+                    "@context": "http://schema.org/extensions",
+                    "themeColor": "0076D7",
+                    "summary": f"{input_token.username.capitalize()} has left the queue.",
+                    "sections": [{
+                        "activityTitle": f"{input_token.username.capitalize()} has left the queue.",
+                        "facts": [],
+                        "markdown": True
+                    }]
+                }
+                requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+                del queue[i]
+            i += 1
+        return {"Queue": list(queue), "Queue_size": len(queue)}
+
     else:
         r = StatusResponse(message="The queue is empty", status=True)
         return r
-
 
 
 @app.get("/board")
