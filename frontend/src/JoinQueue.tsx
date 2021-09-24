@@ -71,7 +71,7 @@ export default function JoinQueue(props: LoginProps): ReactElement {
 
     const classes = useStyles();
 
-    const [value, setValue] = useState<number | null>(null);
+    const [value, setValue] = useState<number | null>(120);
 
     const onSliderChange = (val: number | number[]) => {
         if (val > 360 ){
@@ -116,7 +116,7 @@ export default function JoinQueue(props: LoginProps): ReactElement {
                         Token duration : {valueToHoursMinutes(value)}
                     </Typography>
                     <Slider className={classes.slider}
-                            defaultValue={420}
+                            defaultValue={120}
                             onChange={(event, val) => onSliderChange(val)}
                             aria-labelledby="discrete-slider"
                             step={10}

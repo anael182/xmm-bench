@@ -160,6 +160,9 @@ async def check_token_expiration():
                         expires_date=None,
                         username=queue[0].username,
                     )
+            webhook_data_creation(token.username, "token claimed untill",
+                                  token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
+                                  token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
             queue.popleft()
 
 
@@ -262,14 +265,16 @@ def create_access_token(input_token: InputToken, response: Response):
 # http://127.0.0.1:8000/reservation/release
 def release_token(response: Response):
     global token
+    global queue
     if token is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         r = StatusResponse(message="Token is already free", status=False)
         return r
     else:
         print("Last user => " + token.username)
-        webhook_data_release(token.username, "The board is free")
-        token = None
+        if len(queue) == 0:
+            webhook_data_release(token.username, "The board is free")
+            token = None
         r = StatusResponse(message="Token released", status=True)
         return r
 
@@ -304,7 +309,7 @@ def queue_management(input_token: InputToken):
 @app.post("/reservation/leaveq")
 def queue_management():
     global queue
-    if len(queue) >= 0:
+    if len(queue) >= 1:
         queue.popleft()
         print(list(queue))
         return {"Queue_length": len(queue)}
