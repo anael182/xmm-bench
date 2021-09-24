@@ -148,15 +148,19 @@ async def check_token_expiration():
             webhook_data_release(token.username, "token duration expired")
             token = None
             if len(queue) >= 1:
-                username = queue[0].username
-                now = datetime.now()
-                token_expire_date = datetime.now() + timedelta(minutes=queue[0].token_minutes)
-                token = Token(
-                    creation_date=now,
-                    expires_date=token_expire_date,
-                    username=username,
-                )
-                queue.popleft()
+                if queue[0].token_minutes is not None:
+                    token = Token(
+                        creation_date=datetime.now(),
+                        expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes),
+                        username=queue[0].username,
+                    )
+                else:
+                    token = Token(
+                        creation_date=datetime.now(),
+                        expires_date=None,
+                        username=queue[0].username,
+                    )
+            queue.popleft()
 
 
 @app.on_event('startup')
@@ -300,7 +304,7 @@ def queue_management(input_token: InputToken):
 @app.post("/reservation/leaveq")
 def queue_management():
     global queue
-    if len(queue) == 0:
+    if len(queue) >= 0:
         queue.popleft()
         print(list(queue))
         return {"Queue_length": len(queue)}
