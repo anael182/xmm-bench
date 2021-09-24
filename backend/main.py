@@ -148,9 +148,9 @@ async def check_token_expiration():
             webhook_data_release(token.username, "token duration expired")
             token = None
             if len(queue) >= 1:
-                username = queue[0]['username']
+                username = queue[0].username
                 now = datetime.now()
-                token_expire_date = datetime.now() + timedelta(minutes=queue[0]["token_minutes"])
+                token_expire_date = datetime.now() + timedelta(minutes=queue[0].token_minutes)
                 token = Token(
                     creation_date=now,
                     expires_date=token_expire_date,
@@ -211,13 +211,6 @@ token = None
 #
 
 queue = deque()
-
-# key will be username and value will be token's duration claimed
-# when token fade, I want to pop last user and make the next on the list get the first key
-# queued_users = {
-#     1: ["John", 30],
-#     2: ["Bounty", 10]
-# }
 
 
 @app.post("/reservation/take")
@@ -307,7 +300,7 @@ def queue_management(input_token: InputToken):
 @app.post("/reservation/leaveq")
 def queue_management():
     global queue
-    if queue:
+    if len(queue) == 0:
         queue.popleft()
         print(list(queue))
         return {"Queue_length": len(queue)}
