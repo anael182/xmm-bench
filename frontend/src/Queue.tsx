@@ -1,20 +1,22 @@
-import React, {ReactElement, useState} from 'react';
+import React, {ReactElement, useEffect, useState} from 'react';
 import {Button, Box} from '@material-ui/core';
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import axios from "axios";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+
+
 
 
 const useStyles = makeStyles(() =>
     createStyles({
         button: {
             width:150,
-            border:'solid 1px solid',
             marginTop:5,
             maxHeight:100,
-            marginRight:5
         },
         form:{
             display: "flex",
@@ -31,8 +33,24 @@ const useStyles = makeStyles(() =>
         sliderCounter:{
             marginTop:20
         },
+        queueDiv:{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+        },
+        listContainer:{
+            marginTop: 50,
+            marginBottom:50
+        }
     }),
 );
+
+interface User {
+    index: number,
+    username: string,
+    token_minutes: number
+}
 
 const marks = [
     {
@@ -74,7 +92,7 @@ export default function Queue(props: LoginProps): ReactElement {
     const classes = useStyles();
 
     const [value, setValue] = useState<number | null>(120);
-    const [username, setUsername] = useState('')
+    const [userInQueue, setUserInQueue] = useState<User[]>([]);
 
     const onSliderChange = (val: number | number[]) => {
         if (val > 360 ){
@@ -89,7 +107,7 @@ export default function Queue(props: LoginProps): ReactElement {
         if (e.currentTarget.username.value !== "") {
             axios({
                 method: 'post',
-                url: process.env.React_App_URL_API + "reservation/joinq",
+                url: process.env.React_App_URL_API + "reservation/queue/join",
                 data: {username: e.target.username.value, token_minutes: value}
             })
                 .then(() => {
@@ -99,19 +117,19 @@ export default function Queue(props: LoginProps): ReactElement {
         }
     }
 
-    const handleLeaveQueue = (e: any): void => {
-        e.preventDefault();
-        console.log(username);
+    const handleLeaveQueue = (index: any): void => {
             axios({
                 method: 'post',
-                url: process.env.React_App_URL_API + "reservation/leaveq",
-                data: {username: username}
+                url: process.env.React_App_URL_API + `reservation/queue/leave/${index}`,
             })
-                .then(() => {
-                    props.refresh();
-                })
                 .catch(err => console.error("ERROR =>" + err));
     }
+
+    const fetchQueue = async (): Promise<void> => {
+        const result = await axios(process.env.React_App_URL_API + "reservation/queue/state");
+        setUserInQueue(result.data.queue);
+    }
+
 
     const valueToHoursMinutes = (value :number | null) : string => {
         if (value != null) {
@@ -123,12 +141,27 @@ export default function Queue(props: LoginProps): ReactElement {
         }
     }
 
+    const listUser = userInQueue.map((d, index) =>
+        <div key={index} className={classes.queueDiv}>
+                {index+1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
+                <IconButton aria-label="delete" onClick={() => handleLeaveQueue(index)}>
+                    <DeleteIcon fontSize="small" />
+                </IconButton>
+        </div>
+    );
+
+    useEffect((): void => {
+            fetchQueue()
+        }
+        , []
+    )
+
     return(
         <Box display="flex" justifyContent="center">
             <form onSubmit={handleJoinQueue}>
                 <div className={classes.form}>
                     <TextField id="outlined-basic" label="Username" name="username" autoFocus={true}
-                       variant="outlined" onChange={event => setUsername(event.target.value)}/>
+                       variant="outlined"/>
                     <Typography id="discrete-slider" gutterBottom className={classes.sliderCounter}>
                         Token duration : {valueToHoursMinutes(value)}
                     </Typography>
@@ -141,10 +174,10 @@ export default function Queue(props: LoginProps): ReactElement {
                             min={10}
                             max={420}
                     />
-                    <div>
-                    <Button variant="contained" color='primary' className={classes.button} type="submit">Join Queue</Button>
-                    <Button variant="contained" color="secondary" className={classes.button} onClick={handleLeaveQueue}>Leave Queue</Button>
-                </div>
+                    <Button variant="contained" style={{backgroundColor: '#12824C', color: '#FFFFFF'}} className={classes.button} type="submit">Join Queue</Button>
+                    <div className={classes.listContainer}>
+                        {listUser}
+                    </div>
                 </div>
             </form>
         </Box>

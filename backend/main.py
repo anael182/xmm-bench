@@ -161,7 +161,7 @@ async def check_token_expiration():
                         expires_date=None,
                         username=queue[0].username,
                     )
-            webhook_data_creation(token.username, "token claimed untill",
+            webhook_data_creation(token.username, "token claimed until",
                                   token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
                                   token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
             queue.popleft()
@@ -299,41 +299,42 @@ async def token_state():
         return None
 
 
-@app.post("/reservation/joinq")
-def queue_management(input_token: InputToken):
+@app.post("/reservation/queue/join")
+def queue_management_add(input_token: InputToken):
     global queue
     queue.append(input_token)
     print(list(queue))
-    return {"input_token": input_token, "Queue_position": len(queue)}
+    return {"input_token": input_token, "queue_position": len(queue)}
 
 
-@app.post("/reservation/leaveq")
-def queue_management(input_token: InputToken):
+@app.post("/reservation/queue/leave/{index}")
+def queue_management_delete(index: int):
     global queue
-    i = 0
     if len(queue) >= 1:
-        while i <= (len(queue)-1):
-            if queue[i].username == input_token.username:
-                print(f"{input_token.username} has left the queue.")
-                data = {
-                    "@type": "MessageCard",
-                    "@context": "http://schema.org/extensions",
-                    "themeColor": "0076D7",
-                    "summary": f"{input_token.username.capitalize()} has left the queue.",
-                    "sections": [{
-                        "activityTitle": f"{input_token.username.capitalize()} has left the queue.",
-                        "facts": [],
-                        "markdown": True
-                    }]
-                }
-                requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
-                del queue[i]
-            i += 1
-        return {"Queue": list(queue), "Queue_size": len(queue)}
+        print(f"{queue[index].username} has left the queue.")
+        data = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0076D7",
+            "summary": f"{queue[index].username.capitalize()} has left the queue.",
+            "sections": [{
+                "activityTitle": f"{queue[index].username.capitalize()} has left the queue.",
+                "facts": [],
+                "markdown": True
+            }]
+        }
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+        del queue[index]
+        return {"queue": list(queue)}
 
     else:
         r = StatusResponse(message="The queue is empty", status=True)
         return r
+
+
+@app.get("/reservation/queue/state")
+def get_queue():
+    return {"queue": list(queue)}
 
 
 @app.get("/board")
