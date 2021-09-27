@@ -273,7 +273,7 @@ def release_token(response: Response):
         return r
     else:
         print("Last user => " + token.username)
-        token.expires_date = token.creation_date
+        token = None
         if len(queue) == 0:
             webhook_data_release(token.username, "The board is free")
     r = StatusResponse(message="Token released", status=True)
