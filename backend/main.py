@@ -312,7 +312,7 @@ def queue_management(input_token: InputToken):
     global queue
     i = 0
     if len(queue) >= 1:
-        while i < (len(queue)-1):
+        while i <= (len(queue)-1):
             if queue[i].username == input_token.username:
                 print(f"{input_token.username} has left the queue.")
                 data = {

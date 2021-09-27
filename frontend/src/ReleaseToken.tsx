@@ -7,7 +7,7 @@ import {createStyles, makeStyles} from "@material-ui/core/styles";
 const useStyles = makeStyles(() =>
     createStyles({
         root: {
-            marginTop: 70,
+            marginTop: 20,
         }
     }),
 );

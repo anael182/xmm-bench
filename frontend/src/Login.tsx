@@ -21,9 +21,6 @@ const useStyles = makeStyles(() =>
             minWidth:700,
             paddingTop:20
         },
-        queue:{
-
-        }
     }),
 );
 

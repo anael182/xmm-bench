@@ -13,6 +13,8 @@ const useStyles = makeStyles(() =>
             width:150,
             border:'solid 1px solid',
             marginTop:5,
+            maxHeight:100,
+            marginRight:5
         },
         form:{
             display: "flex",
@@ -28,7 +30,7 @@ const useStyles = makeStyles(() =>
         },
         sliderCounter:{
             marginTop:20
-        }
+        },
     }),
 );
 
@@ -139,8 +141,10 @@ export default function Queue(props: LoginProps): ReactElement {
                             min={10}
                             max={420}
                     />
-                    <Button variant="contained" color='primary' fullWidth={true} className={classes.button} type="submit">Join Queue</Button>
-                    <Button variant="contained" color="secondary" fullWidth={true} className={classes.button} onClick={handleLeaveQueue}>Leave Queue</Button>
+                    <div>
+                    <Button variant="contained" color='primary' className={classes.button} type="submit">Join Queue</Button>
+                    <Button variant="contained" color="secondary" className={classes.button} onClick={handleLeaveQueue}>Leave Queue</Button>
+                </div>
                 </div>
             </form>
         </Box>
