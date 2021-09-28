@@ -93,6 +93,8 @@ export default function Queue(props: LoginProps): ReactElement {
 
     const [value, setValue] = useState<number | null>(120);
     const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
+    const [refresh, setRefresh] = useState<boolean>(false)
+
 
     const onSliderChange = (val: number | number[]) => {
         if (val > 360 ){
@@ -111,6 +113,7 @@ export default function Queue(props: LoginProps): ReactElement {
                 data: {username: e.target.username.value, token_minutes: value}
             })
                 .then(() => {
+                    setRefresh(!refresh);
                     props.refresh();
                 })
                 .catch(err => console.error("ERROR =>" + err));
@@ -122,6 +125,10 @@ export default function Queue(props: LoginProps): ReactElement {
                 method: 'post',
                 url: process.env.React_App_URL_API + `reservation/queue/leave/${index}`,
             })
+                .then(() => {
+                    setRefresh(!refresh);
+                    props.refresh();
+                })
                 .catch(err => console.error("ERROR =>" + err));
     }
 
@@ -152,7 +159,10 @@ export default function Queue(props: LoginProps): ReactElement {
 
     useEffect((): void => {
             fetchQueue()
-        });
+        console.log('dsds')
+        }
+        , [refresh]
+    )
 
     return(
         <Box display="flex" justifyContent="center">
