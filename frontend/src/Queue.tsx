@@ -46,7 +46,7 @@ const useStyles = makeStyles(() =>
     }),
 );
 
-interface User {
+interface Users {
     index: number,
     username: string,
     token_minutes: number
@@ -92,7 +92,7 @@ export default function Queue(props: LoginProps): ReactElement {
     const classes = useStyles();
 
     const [value, setValue] = useState<number | null>(120);
-    const [userInQueue, setUserInQueue] = useState<User[]>([]);
+    const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
 
     const onSliderChange = (val: number | number[]) => {
         if (val > 360 ){
@@ -127,7 +127,7 @@ export default function Queue(props: LoginProps): ReactElement {
 
     const fetchQueue = async (): Promise<void> => {
         const result = await axios(process.env.React_App_URL_API + "reservation/queue/state");
-        setUserInQueue(result.data.queue);
+        setUsersInQueue(result.data.queue);
     }
 
 
@@ -141,7 +141,7 @@ export default function Queue(props: LoginProps): ReactElement {
         }
     }
 
-    const listUser = userInQueue.map((d, index) =>
+    const listUser = usersInQueue.map((d, index) =>
         <div key={index} className={classes.queueDiv}>
                 {index+1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
                 <IconButton aria-label="delete" onClick={() => handleLeaveQueue(index)}>
@@ -152,9 +152,7 @@ export default function Queue(props: LoginProps): ReactElement {
 
     useEffect((): void => {
             fetchQueue()
-        }
-        , []
-    )
+        });
 
     return(
         <Box display="flex" justifyContent="center">
