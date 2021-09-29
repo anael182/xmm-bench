@@ -3,11 +3,9 @@ import {Button, Box} from '@material-ui/core';
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import axios from "axios";
 import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
-import Slider from "@material-ui/core/Slider";
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
-
+import SliderDurationToken from "./SliderDurationToken";
 
 
 
@@ -25,13 +23,6 @@ const useStyles = makeStyles(() =>
             alignItems: "center",
             minWidth:700,
             marginTop:25,
-        },
-        slider:{
-            maxWidth: 200,
-            marginBottom:30
-        },
-        sliderCounter:{
-            marginTop:20
         },
         queueDiv:{
             display: "flex",
@@ -52,40 +43,11 @@ interface Users {
     token_minutes: number
 }
 
-const marks = [
-    {
-        value: 60,
-        label: '1H',
-    },
-    {
-        value: 120,
-        label: '2H',
-    },
-    {
-        value: 180,
-        label: '3H',
-    },
-    {
-        value: 240,
-        label: '4H',
-    },
-    {
-        value: 300,
-        label: '5H',
-    },
-    {
-        value: 360,
-        label: '6H',
-    },
-    {
-        value: 420,
-        label: '∞',
-    }
-];
 
 interface LoginProps {
     refresh: () => void;
 }
+
 
 export default function Queue(props: LoginProps): ReactElement {
 
@@ -96,13 +58,10 @@ export default function Queue(props: LoginProps): ReactElement {
     const [refresh, setRefresh] = useState<boolean>(false)
 
 
-    const onSliderChange = (val: number | number[]) => {
-        if (val > 360 ){
-            setValue(null);
-        }else {
-            setValue(val as number);
-        }
+    const updateSliderValue = (value: number | null): void => {
+        setValue(value);
     }
+
 
     const handleJoinQueue = (e: any): void => {
         e.preventDefault();
@@ -120,7 +79,7 @@ export default function Queue(props: LoginProps): ReactElement {
         }
     }
 
-    const handleLeaveQueue = (index: any): void => {
+    const handleLeaveQueue = (index: number): void => {
             axios({
                 method: 'post',
                 url: process.env.React_App_URL_API + `reservation/queue/leave/${index}`,
@@ -136,7 +95,6 @@ export default function Queue(props: LoginProps): ReactElement {
         const result = await axios(process.env.React_App_URL_API + "reservation/queue/state");
         setUsersInQueue(result.data.queue);
     }
-
 
     const valueToHoursMinutes = (value :number | null) : string => {
         if (value != null) {
@@ -157,6 +115,7 @@ export default function Queue(props: LoginProps): ReactElement {
         </div>
     );
 
+
     useEffect((): void => {
             fetchQueue()
         }
@@ -169,18 +128,7 @@ export default function Queue(props: LoginProps): ReactElement {
                 <div className={classes.form}>
                     <TextField id="outlined-basic" label="Username" name="username" autoFocus={true}
                        variant="outlined"/>
-                    <Typography id="discrete-slider" gutterBottom className={classes.sliderCounter}>
-                        Token duration : {valueToHoursMinutes(value)}
-                    </Typography>
-                    <Slider className={classes.slider}
-                            defaultValue={120}
-                            onChange={(event, val) => onSliderChange(val)}
-                            aria-labelledby="discrete-slider"
-                            step={10}
-                            marks={marks}
-                            min={10}
-                            max={420}
-                    />
+                    <SliderDurationToken getSliderValue={updateSliderValue} />
                     <Button variant="contained" style={{backgroundColor: '#12824C', color: '#FFFFFF'}} className={classes.button} type="submit">Join Queue</Button>
                     <div className={classes.listContainer}>
                         {listUser}

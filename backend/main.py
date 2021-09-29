@@ -47,7 +47,7 @@ class Token(BaseModel):
 #
 
 
-def teams_webhook(summary: str, activity: str, name_message: str = None, value_message: str = None):
+def teams_webhook(summary: str, activity: str, name_message: str, value_message: str):
     data = {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
@@ -253,6 +253,7 @@ def release_token(response: Response):
             teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
                           f'{token.username} just released {os.getenv("BOARD_NAME")}',
                           'The board is free')
+            token = None
     r = StatusResponse(message="Token released", status=True)
     return r
 
@@ -287,11 +288,15 @@ def queue_management_add(input_token: InputToken):
 def queue_management_delete(index: int):
     global queue
     if len(queue) >= 1:
-        print(f"{queue[index].username} has left the queue.")
-        teams_webhook(f"{queue[index].username.capitalize()} has left the queue.",
-                      f"{queue[index].username.capitalize()} has left the queue.","","")
-        del queue[index]
-        return {"queue": list(queue)}
+        if index <= len(queue):
+            print(f"{queue[index].username} has left the queue.")
+            teams_webhook(f"{queue[index].username.capitalize()} has left the queue.",
+                          f"{queue[index].username.capitalize()} has left the queue.","","")
+            del queue[index]
+            return {"queue": list(queue)}
+        else:
+            r = StatusResponse(message="Index out of bounds", status=True)
+            return r
     else:
         r = StatusResponse(message="The queue is empty", status=True)
         return r

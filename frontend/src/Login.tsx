@@ -36,7 +36,7 @@ export default function Login(): ReactElement {
     const classes = useStyles();
 
     const [user, setUser] = useState<User | null>(null);
-    const [refresh, setRefresh] = useState<boolean>(false)
+    const [refresh, setRefresh] = useState<boolean>(false);
 
 
     const fetchData = async (): Promise<void> => {
