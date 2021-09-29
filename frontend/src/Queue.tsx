@@ -142,7 +142,7 @@ export default function Queue(props: LoginProps): ReactElement {
         if (value != null) {
             let hours = Math.trunc(value / 60);
             let minutes = (value % 60).toString().padStart(2, "0");
-            return `${hours}h ${minutes}m`
+            return `${hours}h${minutes}m`
         }else{
             return '∞'
         }

@@ -99,38 +99,18 @@ webcam_runner = WebcamRunner()
 #
 
 
-def webhook_data_creation(username: str, message: str, token_creation_date: str = None, token_expire_date: str = None):
+def teams_webhook(summary: str, activity: str, name_message: str = None, value_message: str = None):
     data = {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
         "themeColor": "0076D7",
-        "summary": username + " is using " + os.getenv("BOARD_NAME", ""),
+        "summary": summary,
         "sections": [{
-            "activityTitle": username + " is using " + os.getenv("BOARD_NAME") + " since " + token_creation_date,
+            "activityTitle": activity,
             "facts": [
                 {
-                    "name": message,
-                    "value": token_expire_date
-                }
-            ],
-            "markdown": True
-        }]
-    }
-    if os.getenv("WEBHOOK_URL") is not None:
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
-
-
-def webhook_data_release(username: str, message: str = None):
-    data = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary": username + " just released " + os.getenv("BOARD_NAME"),
-        "sections": [{
-            "activityTitle": username + " just released " + os.getenv("BOARD_NAME"),
-            "facts": [
-                {
-                    "name": message,
+                    "name": name_message,
+                    "value": value_message
                 }
             ],
             "markdown": True
@@ -146,24 +126,19 @@ async def check_token_expiration():
     while True:
         await asyncio.sleep(1)
         if token and datetime.now() >= token.expires_date:
-            webhook_data_release(token.username, "token duration expired")
+            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          'Token duration expired')
             token = None
             if len(queue) >= 1:
-                if queue[0].token_minutes is not None:
-                    token = Token(
-                        creation_date=datetime.now(),
-                        expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes),
-                        username=queue[0].username,
-                    )
-                else:
-                    token = Token(
-                        creation_date=datetime.now(),
-                        expires_date=None,
-                        username=queue[0].username,
-                    )
-            webhook_data_creation(token.username, "token claimed until",
-                                  token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
-                                  token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
+                token = Token(
+                    creation_date=datetime.now(),
+                    expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[0].token_minutes else None,
+                    username=queue[0].username,
+                )
+            teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                          f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                          'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
             queue.popleft()
 
 
@@ -233,9 +208,9 @@ def create_access_token(input_token: InputToken, response: Response):
             username=input_token.username,
         )
         print("Creation du token : " + str(token))
-        webhook_data_creation(input_token.username, "token claimed untill",
-                              token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
-                              token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
+        teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                      f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                      'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -247,8 +222,9 @@ def create_access_token(input_token: InputToken, response: Response):
             expires_date=None,
             username=input_token.username,
         )
-        webhook_data_creation(input_token.username, "No expiration time",
-                              token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
+        teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                      f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                      "No expiration time")
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': None,
@@ -275,7 +251,9 @@ def release_token(response: Response):
         print("Last user => " + token.username)
         token.expires_date = datetime.now()
         if len(queue) == 0:
-            webhook_data_release(token.username, "The board is free")
+            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          'The board is free')
     r = StatusResponse(message="Token released", status=True)
     return r
 
@@ -303,7 +281,6 @@ async def token_state():
 def queue_management_add(input_token: InputToken):
     global queue
     queue.append(input_token)
-    print(list(queue))
     return {"input_token": input_token, "queue_position": len(queue)}
 
 
@@ -312,7 +289,7 @@ def queue_management_delete(index: int):
     global queue
     if len(queue) >= 1:
         print(f"{queue[index].username} has left the queue.")
-        data = {
+        '''data = {
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
             "themeColor": "0076D7",
@@ -322,8 +299,9 @@ def queue_management_delete(index: int):
                 "facts": [],
                 "markdown": True
             }]
-        }
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+        }'''
+        teams_webhook(f"{queue[index].username.capitalize()} has left the queue.",
+                      f"{queue[index].username.capitalize()} has left the queue.","","")
         del queue[index]
         return {"queue": list(queue)}
 
