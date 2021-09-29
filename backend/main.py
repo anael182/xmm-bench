@@ -42,6 +42,53 @@ class Token(BaseModel):
     username: str
     expires_date: Optional[datetime]
 
+#
+# Webhook management
+#
+
+
+def teams_webhook(summary: str, activity: str, name_message: str = None, value_message: str = None):
+    data = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary": summary,
+        "sections": [{
+            "activityTitle": activity,
+            "facts": [
+                {
+                    "name": name_message,
+                    "value": value_message
+                }
+            ],
+            "markdown": True
+        }]
+    }
+    if os.getenv("WEBHOOK_URL") is not None:
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+
+
+async def check_token_expiration():
+    global token
+    global queue
+    while True:
+        await asyncio.sleep(1)
+        if token and datetime.now() >= token.expires_date:
+            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          'Token duration expired')
+            token = None
+            if len(queue) >= 1:
+                token = Token(
+                    creation_date=datetime.now(),
+                    expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[0].token_minutes else None,
+                    username=queue[0].username,
+                )
+            teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                          f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                          'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
+            queue.popleft()
+
 
 #
 # Webcam management
@@ -92,54 +139,6 @@ class WebcamRunner:
 
 
 webcam_runner = WebcamRunner()
-
-
-#
-# Webhook management
-#
-
-
-def teams_webhook(summary: str, activity: str, name_message: str = None, value_message: str = None):
-    data = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary": summary,
-        "sections": [{
-            "activityTitle": activity,
-            "facts": [
-                {
-                    "name": name_message,
-                    "value": value_message
-                }
-            ],
-            "markdown": True
-        }]
-    }
-    if os.getenv("WEBHOOK_URL") is not None:
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
-
-
-async def check_token_expiration():
-    global token
-    global queue
-    while True:
-        await asyncio.sleep(1)
-        if token and datetime.now() >= token.expires_date:
-            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          'Token duration expired')
-            token = None
-            if len(queue) >= 1:
-                token = Token(
-                    creation_date=datetime.now(),
-                    expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[0].token_minutes else None,
-                    username=queue[0].username,
-                )
-            teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
-                          f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
-                          'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
-            queue.popleft()
 
 
 @app.on_event('startup')
@@ -289,22 +288,10 @@ def queue_management_delete(index: int):
     global queue
     if len(queue) >= 1:
         print(f"{queue[index].username} has left the queue.")
-        '''data = {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "themeColor": "0076D7",
-            "summary": f"{queue[index].username.capitalize()} has left the queue.",
-            "sections": [{
-                "activityTitle": f"{queue[index].username.capitalize()} has left the queue.",
-                "facts": [],
-                "markdown": True
-            }]
-        }'''
         teams_webhook(f"{queue[index].username.capitalize()} has left the queue.",
                       f"{queue[index].username.capitalize()} has left the queue.","","")
         del queue[index]
         return {"queue": list(queue)}
-
     else:
         r = StatusResponse(message="The queue is empty", status=True)
         return r

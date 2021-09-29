@@ -159,7 +159,6 @@ export default function Queue(props: LoginProps): ReactElement {
 
     useEffect((): void => {
             fetchQueue()
-        console.log('dsds')
         }
         , [refresh]
     )
