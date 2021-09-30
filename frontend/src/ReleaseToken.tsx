@@ -7,7 +7,11 @@ import {createStyles, makeStyles} from "@material-ui/core/styles";
 const useStyles = makeStyles(() =>
     createStyles({
         root: {
-            marginTop: 20,
+            marginTop:5,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems:'center',
+            position: 'relative'
         }
     }),
 );

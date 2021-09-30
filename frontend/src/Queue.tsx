@@ -11,6 +11,9 @@ import SliderDurationToken from "./SliderDurationToken";
 
 const useStyles = makeStyles(() =>
     createStyles({
+        container:{
+            overflow: 'hidden',
+        },
         button: {
             width:150,
             marginTop:5,
@@ -22,17 +25,28 @@ const useStyles = makeStyles(() =>
             justifyContent: 'center',
             alignItems: "center",
             minWidth:700,
-            marginTop:25,
+            marginTop:50,
         },
         queueDiv:{
             display: "flex",
             flexDirection: "row",
-            justifyContent: "space-between",
+            justifyContent: "space-evenly",
             alignItems: "center",
         },
-        listContainer:{
-            marginTop: 50,
-            marginBottom:50
+        boxOne:{
+            width: '10%',
+        },
+        boxTwo:{
+            display:'block',
+            justifyContent:'center',
+            marginLeft:'19vh'
+        },
+        boxThree:{
+            display:'flex',
+            flexDirection: "column",
+            justifyContent:'center',
+            width:'20%',
+            overflow: 'auto'
         }
     }),
 );
@@ -106,6 +120,7 @@ export default function Queue(props: LoginProps): ReactElement {
         }
     }
 
+
     const listUser = usersInQueue.map((d, index) =>
         <div key={index} className={classes.queueDiv}>
                 {index+1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
@@ -123,18 +138,21 @@ export default function Queue(props: LoginProps): ReactElement {
     )
 
     return(
-        <Box display="flex" justifyContent="center">
+        <Box display="flex" justifyContent="center" className={classes.container}>
+            <Box className={classes.boxOne}/>
+        <Box display="flex" className={classes.boxTwo} sx={{ flexGrow: 1 }}>
             <form onSubmit={handleJoinQueue}>
                 <div className={classes.form}>
                     <TextField id="outlined-basic" label="Username" name="username" autoFocus={true}
                        variant="outlined"/>
                     <SliderDurationToken getSliderValue={updateSliderValue} />
                     <Button variant="contained" style={{backgroundColor: '#12824C', color: '#FFFFFF'}} className={classes.button} type="submit">Join Queue</Button>
-                    <div className={classes.listContainer}>
-                        {listUser}
-                    </div>
                 </div>
             </form>
+        </Box>
+        <Box display="flex"  className={classes.boxThree}>
+            {listUser}
+        </Box>
         </Box>
     )
 }

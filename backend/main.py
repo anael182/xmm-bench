@@ -76,7 +76,7 @@ async def check_token_expiration():
         if token and datetime.now() >= token.expires_date:
             teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
                           f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          'Token duration expired')
+                          'Token duration expired',"")
             token = None
             if len(queue) >= 1:
                 token = Token(
@@ -252,8 +252,8 @@ def release_token(response: Response):
         if len(queue) == 0:
             teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
                           f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          'The board is free')
-            token = None
+                          'The board is free',"")
+    token = None
     r = StatusResponse(message="Token released", status=True)
     return r
 

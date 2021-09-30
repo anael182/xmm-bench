@@ -48,7 +48,7 @@ const marks = [
 ];
 
 interface TakeTokenProps {
-    getSliderValue: (value: number | null) => void;
+    getSliderValue: (value: number | null) => void,
 }
 
 export default function SliderDurationToken(props: TakeTokenProps): ReactElement {
