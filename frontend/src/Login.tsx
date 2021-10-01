@@ -6,6 +6,7 @@ import {Alert} from "@material-ui/lab";
 import useInterval from "./utils/useInterval";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import Queue from "./Queue";
+import {Grid} from "@material-ui/core";
 
 const useStyles = makeStyles(() =>
     createStyles({
@@ -21,6 +22,10 @@ const useStyles = makeStyles(() =>
             minWidth:700,
             paddingTop:20
         },
+        boxQueue: {
+            display:'flex',
+            flexDirection: 'column',
+        }
     }),
 );
 
@@ -72,8 +77,10 @@ export default function Login(): ReactElement {
                             : <span> There is no expires date for this token.</span>
                         }
                     </Alert>
-                    <Queue refresh={refreshComponent}/>
-                    <ReleaseToken refresh={refreshComponent}/>
+                    <Grid container className={classes.boxQueue}>
+                        <Queue refresh={refreshComponent}/>
+                        <ReleaseToken refresh={refreshComponent}/>
+                    </Grid>
                 </div>
             }
         </div>

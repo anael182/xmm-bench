@@ -84,10 +84,12 @@ async def check_token_expiration():
                     expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[0].token_minutes else None,
                     username=queue[0].username,
                 )
-            teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
-                          f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
-                          'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
-            queue.popleft()
+                teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                              f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                              'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
+                queue.popleft()
+            elif len(queue) == 0:
+                token = None
 
 
 #

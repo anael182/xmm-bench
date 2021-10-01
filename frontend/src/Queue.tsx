@@ -1,5 +1,5 @@
-import React, {ReactElement, useEffect, useState} from 'react';
-import {Button, Box} from '@material-ui/core';
+import React, {FormEvent, ReactElement, useEffect, useState} from 'react';
+import {Box, Button, Typography} from '@material-ui/core';
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import axios from "axios";
 import TextField from "@material-ui/core/TextField";
@@ -7,46 +7,48 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SliderDurationToken from "./SliderDurationToken";
 
-
+let joinQueueButton = window.innerWidth <= 1920 ? "21vh" : "20.2vh"
 
 const useStyles = makeStyles(() =>
+
     createStyles({
-        container:{
+        container: {
             overflow: 'hidden',
+            maxHeight: 250
         },
         button: {
-            width:150,
-            marginTop:5,
-            maxHeight:100,
+            width: 152,
+            marginTop: 5,
+            maxHeight: 100,
         },
-        form:{
+        form: {
             display: "flex",
             flexDirection: "column",
             justifyContent: 'center',
             alignItems: "center",
-            minWidth:700,
-            marginTop:50,
+            minWidth: 700,
+            marginTop: 50,
         },
-        queueDiv:{
+        queueDiv: {
             display: "flex",
             flexDirection: "row",
-            justifyContent: "space-evenly",
+            justifyContent: "space-between",
             alignItems: "center",
         },
-        boxOne:{
-            width: '10%',
+        boxOne: {
+            width: '9%',
         },
-        boxTwo:{
-            display:'block',
-            justifyContent:'center',
-            marginLeft:'19vh'
+        boxTwo: {
+            display: 'block',
+            justifyContent: 'center',
+            marginLeft: joinQueueButton,
         },
-        boxThree:{
-            display:'flex',
+        boxThree: {
+            display: 'flex',
             flexDirection: "column",
-            justifyContent:'center',
-            width:'20%',
-            overflow: 'auto'
+            justifyContent: 'center',
+            width: '19.7%',
+            overflow: 'auto',
         }
     }),
 );
@@ -56,7 +58,6 @@ interface Users {
     username: string,
     token_minutes: number
 }
-
 
 interface LoginProps {
     refresh: () => void;
@@ -77,13 +78,13 @@ export default function Queue(props: LoginProps): ReactElement {
     }
 
 
-    const handleJoinQueue = (e: any): void => {
+    const handleJoinQueue = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         if (e.currentTarget.username.value !== "") {
             axios({
                 method: 'post',
                 url: process.env.React_App_URL_API + "reservation/queue/join",
-                data: {username: e.target.username.value, token_minutes: value}
+                data: {username: e.currentTarget.username.value, token_minutes: value}
             })
                 .then(() => {
                     setRefresh(!refresh);
@@ -94,15 +95,15 @@ export default function Queue(props: LoginProps): ReactElement {
     }
 
     const handleLeaveQueue = (index: number): void => {
-            axios({
-                method: 'post',
-                url: process.env.React_App_URL_API + `reservation/queue/leave/${index}`,
+        axios({
+            method: 'post',
+            url: process.env.React_App_URL_API + `reservation/queue/leave/${index}`,
+        })
+            .then(() => {
+                setRefresh(!refresh);
+                props.refresh();
             })
-                .then(() => {
-                    setRefresh(!refresh);
-                    props.refresh();
-                })
-                .catch(err => console.error("ERROR =>" + err));
+            .catch(err => console.error("ERROR =>" + err));
     }
 
     const fetchQueue = async (): Promise<void> => {
@@ -110,12 +111,12 @@ export default function Queue(props: LoginProps): ReactElement {
         setUsersInQueue(result.data.queue);
     }
 
-    const valueToHoursMinutes = (value :number | null) : string => {
+    const valueToHoursMinutes = (value: number | null): string => {
         if (value != null) {
             let hours = Math.trunc(value / 60);
             let minutes = (value % 60).toString().padStart(2, "0");
             return `${hours}h${minutes}m`
-        }else{
+        } else {
             return '∞'
         }
     }
@@ -123,10 +124,10 @@ export default function Queue(props: LoginProps): ReactElement {
 
     const listUser = usersInQueue.map((d, index) =>
         <div key={index} className={classes.queueDiv}>
-                {index+1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
-                <IconButton aria-label="delete" onClick={() => handleLeaveQueue(index)}>
-                    <DeleteIcon fontSize="small" />
-                </IconButton>
+            {index + 1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
+            <IconButton aria-label="delete" onClick={() => handleLeaveQueue(index)}>
+                <DeleteIcon fontSize="small"/>
+            </IconButton>
         </div>
     );
 
@@ -137,22 +138,29 @@ export default function Queue(props: LoginProps): ReactElement {
         , [refresh]
     )
 
-    return(
+    return (
         <Box display="flex" justifyContent="center" className={classes.container}>
             <Box className={classes.boxOne}/>
-        <Box display="flex" className={classes.boxTwo} sx={{ flexGrow: 1 }}>
-            <form onSubmit={handleJoinQueue}>
-                <div className={classes.form}>
-                    <TextField id="outlined-basic" label="Username" name="username" autoFocus={true}
-                       variant="outlined"/>
-                    <SliderDurationToken getSliderValue={updateSliderValue} />
-                    <Button variant="contained" style={{backgroundColor: '#12824C', color: '#FFFFFF'}} className={classes.button} type="submit">Join Queue</Button>
-                </div>
-            </form>
-        </Box>
-        <Box display="flex"  className={classes.boxThree}>
-            {listUser}
-        </Box>
+            <Box display="flex" className={classes.boxTwo} sx={{flexGrow: 1}}>
+                <form onSubmit={handleJoinQueue}>
+                    <div className={classes.form}>
+                        <TextField id="outlined-basic" label="Username" name="username" autoFocus={true}
+                                   variant="outlined"/>
+                        <SliderDurationToken getSliderValue={updateSliderValue}/>
+                        <Button variant="contained" style={{backgroundColor: '#12824C', color: '#FFFFFF'}}
+                                className={classes.button} type="submit">Join Queue</Button>
+                    </div>
+                </form>
+            </Box>
+            <Box display="flex" className={classes.boxThree}>
+                {usersInQueue.length >= 1
+                    ? <div>
+                        <Typography variant="h6" gutterBottom component="div">Queue:</Typography>
+                        {listUser}
+                    </div>
+                    : <div/>
+                }
+            </Box>
         </Box>
     )
 }
