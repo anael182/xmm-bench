@@ -5,11 +5,11 @@ import Slider from "@material-ui/core/Slider";
 
 const useStyles = makeStyles(() =>
     createStyles({
-        slider:{
-            width:200,
+        slider: {
+            width: 200,
             marginBottom: 25,
         },
-        sliderCounter:{
+        sliderCounter: {
             textAlign: "center",
             marginTop: 15,
         },
@@ -53,35 +53,33 @@ interface TakeTokenProps {
 
 export default function SliderDurationToken(props: TakeTokenProps): ReactElement {
 
-
     const classes = useStyles();
-
 
     const [value, setValue] = useState<number | null>(120);
 
     const onSliderChange = (val: number | number[]) => {
-        if (val > 360 ){
+        if (val > 360) {
             setValue(null);
-        }else {
+        } else {
             setValue(val as number);
         }
         props.getSliderValue(value);
     }
 
-    const valueToHoursMinutes = (value :number | null) : string => {
+    const valueToHoursMinutes = (value: number | null): string => {
         if (value != null) {
             let hours = Math.trunc(value / 60);
             let minutes = (value % 60).toString().padStart(2, "0");
             return `${hours}h${minutes}m`
-        }else{
+        } else {
             return '∞'
         }
     }
 
-    return(
+    return (
         <div>
             <Typography id="discrete-slider" gutterBottom className={classes.sliderCounter}>
-            Token duration : {valueToHoursMinutes(value)}
+                Token duration : {valueToHoursMinutes(value)}
             </Typography>
             <Slider className={classes.slider}
                     defaultValue={120}
@@ -94,6 +92,5 @@ export default function SliderDurationToken(props: TakeTokenProps): ReactElement
             />
         </div>
     )
-
 }
 

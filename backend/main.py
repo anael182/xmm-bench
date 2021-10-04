@@ -1,17 +1,17 @@
+import asyncio
+import os
+import subprocess
+from collections import deque
 from datetime import datetime, timedelta
 from typing import Optional
 
+import requests
 import v4l2py
+from dotenv import load_dotenv
 from fastapi import FastAPI, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-import requests
-from dotenv import load_dotenv
-import os
-import subprocess
-import asyncio
-from collections import deque
 
 app = FastAPI()
 load_dotenv()
@@ -41,6 +41,7 @@ class Token(BaseModel):
     creation_date: datetime
     username: str
     expires_date: Optional[datetime]
+
 
 #
 # Webhook management
@@ -76,12 +77,13 @@ async def check_token_expiration():
         if token and datetime.now() >= token.expires_date:
             teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
                           f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          'Token duration expired',"")
+                          'Token duration expired', "")
             token = None
             if len(queue) >= 1:
                 token = Token(
                     creation_date=datetime.now(),
-                    expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[0].token_minutes else None,
+                    expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[
+                        0].token_minutes else None,
                     username=queue[0].username,
                 )
                 teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
@@ -254,8 +256,7 @@ def release_token(response: Response):
         if len(queue) == 0:
             teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
                           f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          'The board is free',"")
-    token = None
+                          'The board is free', "")
     r = StatusResponse(message="Token released", status=True)
     return r
 
@@ -293,7 +294,7 @@ def queue_management_delete(index: int):
         if index <= len(queue):
             print(f"{queue[index].username} has left the queue.")
             teams_webhook(f"{queue[index].username.capitalize()} has left the queue.",
-                          f"{queue[index].username.capitalize()} has left the queue.","","")
+                          f"{queue[index].username.capitalize()} has left the queue.", "", "")
             del queue[index]
             return {"queue": list(queue)}
         else:

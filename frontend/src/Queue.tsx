@@ -6,6 +6,7 @@ import TextField from "@material-ui/core/TextField";
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SliderDurationToken from "./SliderDurationToken";
+import useInterval from "./utils/useInterval";
 
 let joinQueueButton = window.innerWidth <= 1920 ? "21vh" : "20.2vh"
 
@@ -48,7 +49,7 @@ const useStyles = makeStyles(() =>
             flexDirection: "column",
             justifyContent: 'center',
             width: '19.7%',
-            overflow: 'auto',
+            overflowY: 'auto',
         }
     }),
 );
@@ -131,9 +132,15 @@ export default function Queue(props: LoginProps): ReactElement {
         </div>
     );
 
+    useInterval(
+        fetchQueue
+        ,
+        10000
+    );
 
     useEffect((): void => {
-            fetchQueue()
+            fetchQueue();
+            console.log("memory leak checker");
         }
         , [refresh]
     )
