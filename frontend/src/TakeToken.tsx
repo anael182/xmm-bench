@@ -149,7 +149,6 @@ export default function TakeToken(props: LoginProps): ReactElement {
     useEffect((): void => {
             fetchUser();
             fetchQueue();
-            console.log('memory leaks detected');
         }
         , [refresh]
     )
