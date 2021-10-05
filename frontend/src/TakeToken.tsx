@@ -74,7 +74,6 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     const fetchUser = async (): Promise<void> => {
         const result = await axios(process.env.React_App_URL_API + "reservation/state");
-        console.log(result.data);
         if (result.data) {
             setUserIsConnected(true);
         }

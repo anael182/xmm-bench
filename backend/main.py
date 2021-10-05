@@ -69,29 +69,43 @@ def teams_webhook(summary: str, activity: str, name_message: str, value_message:
         requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
 
 
-async def check_token_expiration():
+#
+# Token
+#
+
+token = None
+
+
+def check_token_expiration():
+    global token
+    if token and datetime.now() >= token.expires_date:
+        teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                      f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                      'Token duration expired', "")
+        if len(queue) >= 1:
+            token = Token(
+                creation_date=datetime.now(),
+                expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[
+                    0].token_minutes else None,
+                username=queue[0].username,
+            )
+            teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                          f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                          'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
+            queue.popleft()
+        elif len(queue) == 0:
+            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          'The board is free', "")
+            token = None
+
+
+async def background_task():
     global token
     global queue
     while True:
         await asyncio.sleep(1)
-        if token and datetime.now() >= token.expires_date:
-            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          'Token duration expired', "")
-            token = None
-            if len(queue) >= 1:
-                token = Token(
-                    creation_date=datetime.now(),
-                    expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[
-                        0].token_minutes else None,
-                    username=queue[0].username,
-                )
-                teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
-                              f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
-                              'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
-                queue.popleft()
-            elif len(queue) == 0:
-                token = None
+        check_token_expiration()
 
 
 #
@@ -148,7 +162,7 @@ webcam_runner = WebcamRunner()
 @app.on_event('startup')
 async def app_startup():
     asyncio.create_task(webcam_runner.run_capture())
-    asyncio.create_task(check_token_expiration())
+    asyncio.create_task(background_task())
 
 
 @app.get("/webcam/{fps}")
@@ -185,12 +199,6 @@ def toggle_relay(name: str):
     r = StatusResponse(message="", status=r.returncode == 0)
     return r
 
-
-#
-# Token
-#
-
-token = None
 
 #
 # Queue
@@ -253,10 +261,7 @@ def release_token(response: Response):
     else:
         print("Last user => " + token.username)
         token.expires_date = datetime.now()
-        if len(queue) == 0:
-            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
-                          'The board is free', "")
+        check_token_expiration()
     r = StatusResponse(message="Token released", status=True)
     return r
 

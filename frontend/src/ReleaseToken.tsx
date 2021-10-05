@@ -1,4 +1,4 @@
-import React, {FormEvent, ReactElement, useEffect, useState} from 'react';
+import React, {FormEvent, ReactElement} from 'react';
 import {Button} from '@material-ui/core';
 import axios from "axios";
 import Box from '@material-ui/core/Box';
@@ -25,9 +25,6 @@ export default function ReleaseToken(props: LoginProps): ReactElement {
 
     const classes = useStyles();
 
-    const [refresh, setRefresh] = useState<boolean>(false);
-
-
     const handleRelease = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         axios({
@@ -35,17 +32,11 @@ export default function ReleaseToken(props: LoginProps): ReactElement {
             url: process.env.React_App_URL_API + 'reservation/release',
         })
             .then(() => {
-                setRefresh(!refresh);
+
                 props.refresh();
             })
             .catch(err => console.error("ERROR =>" + err));
     }
-
-    useEffect((): void => {
-            console.log('refreshed');
-        }
-        , [refresh]
-    )
 
     return (
         <Box display="flex" justifyContent="center">
