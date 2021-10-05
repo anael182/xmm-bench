@@ -1,0 +1,35 @@
+version: "3.7"
+services:
+  backend:
+    restart: always
+    image: xmm-bench-web-backend:latest
+    build: ./backend
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=PathPrefixStrip:/back
+      - traefik.port=8000
+
+  frontend:
+    restart: always
+    image: xmm-bench-web-frontend:latest
+    build: ./frontend
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=PathPrefix:/
+      - traefik.port=80
+
+  traefik:
+    restart: always
+    image: traefik:1.7
+    ports:
+      - "1980:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --api \
+           --loglevel=info \
+           --defaultentrypoints=http
+           --entrypoints="Name:http Address::80" \
+           --docker \
+           --docker.endpoint="unix:///var/run/docker.sock" \
+           --docker.watch=true \
+           --docker.exposedbydefault=false 

@@ -1,0 +1,21 @@
+variables:
+  CI_REGISTRY: artifactory.korys.dev/xmm-bench-web
+  CI_DEPLOY_USER: korys.dev
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - docker build -t ${CI_REGISTRY}/backend:${CI_COMMIT_REF_SLUG} backend
+    - docker build -t ${CI_REGISTRY}/frontend:${CI_COMMIT_REF_SLUG} frontend
+
+deploy:
+  stage: deploy
+  script:
+    - docker login -u ${CI_DEPLOY_USER} -p ${CI_DEPLOY_PASSWORD} ${CI_REGISTRY}
+    - docker push ${CI_REGISTRY}/backend:${CI_COMMIT_REF_SLUG}
+    - docker push ${CI_REGISTRY}/frontend:${CI_COMMIT_REF_SLUG}
+
