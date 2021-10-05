@@ -5,7 +5,6 @@ import axios from "axios";
 import {Alert} from "@material-ui/lab";
 import useInterval from "./utils/useInterval";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
-import Queue from "./Queue";
 import {Grid} from "@material-ui/core";
 
 const useStyles = makeStyles(() =>
@@ -14,16 +13,16 @@ const useStyles = makeStyles(() =>
             justifyContent: 'center',
             textAlign: 'center',
         },
-        form:{
+        form: {
             display: "flex",
             flexDirection: "row",
             justifyContent: 'space-evenly',
             alignItems: "center",
-            minWidth:700,
-            paddingTop:20
+            minWidth: 700,
+            paddingTop: 20
         },
         boxQueue: {
-            display:'flex',
+            display: 'flex',
             flexDirection: 'column',
         }
     }),
@@ -78,7 +77,7 @@ export default function Login(): ReactElement {
                         }
                     </Alert>
                     <Grid container className={classes.boxQueue}>
-                        <Queue refresh={refreshComponent}/>
+                        <TakeToken refresh={refreshComponent}/>
                         <ReleaseToken refresh={refreshComponent}/>
                     </Grid>
                 </div>
