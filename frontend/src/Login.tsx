@@ -5,6 +5,7 @@ import axios from "axios";
 import {Alert} from "@material-ui/lab";
 import useInterval from "./utils/useInterval";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
+import {Grid} from "@material-ui/core";
 
 const useStyles = makeStyles(() =>
     createStyles({
@@ -12,6 +13,18 @@ const useStyles = makeStyles(() =>
             justifyContent: 'center',
             textAlign: 'center',
         },
+        form: {
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: 'space-evenly',
+            alignItems: "center",
+            minWidth: 700,
+            paddingTop: 20
+        },
+        boxQueue: {
+            display: 'flex',
+            flexDirection: 'column',
+        }
     }),
 );
 
@@ -20,7 +33,6 @@ interface User {
     username: string,
     creation_date: string,
     expires_date: string
-
 }
 
 export default function Login(): ReactElement {
@@ -28,7 +40,7 @@ export default function Login(): ReactElement {
     const classes = useStyles();
 
     const [user, setUser] = useState<User | null>(null);
-    const [refresh, setRefresh] = useState<boolean>(false)
+    const [refresh, setRefresh] = useState<boolean>(false);
 
 
     const fetchData = async (): Promise<void> => {
@@ -64,7 +76,10 @@ export default function Login(): ReactElement {
                             : <span> There is no expires date for this token.</span>
                         }
                     </Alert>
-                    <ReleaseToken refresh={refreshComponent}/>
+                    <Grid container className={classes.boxQueue}>
+                        <TakeToken refresh={refreshComponent}/>
+                        <ReleaseToken refresh={refreshComponent}/>
+                    </Grid>
                 </div>
             }
         </div>

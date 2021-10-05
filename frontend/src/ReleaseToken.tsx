@@ -7,7 +7,11 @@ import {createStyles, makeStyles} from "@material-ui/core/styles";
 const useStyles = makeStyles(() =>
     createStyles({
         root: {
-            marginTop: 100,
+            marginTop: 5,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative'
         }
     }),
 );
@@ -27,10 +31,12 @@ export default function ReleaseToken(props: LoginProps): ReactElement {
             method: 'post',
             url: process.env.React_App_URL_API + 'reservation/release',
         })
-            .then(() => props.refresh())
+            .then(() => {
+
+                props.refresh();
+            })
             .catch(err => console.error("ERROR =>" + err));
     }
-
 
     return (
         <Box display="flex" justifyContent="center">

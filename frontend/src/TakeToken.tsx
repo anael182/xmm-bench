@@ -1,69 +1,60 @@
-import {Button} from '@material-ui/core';
+import {Box, Button, Typography} from '@material-ui/core';
 import axios from "axios";
-import {makeStyles, createStyles} from '@material-ui/core/styles';
-import {FormEvent, ReactElement, useState} from "react";
+import {createStyles, makeStyles} from '@material-ui/core/styles';
+import React, {FormEvent, ReactElement, useEffect, useState} from "react";
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
-import Slider from '@material-ui/core/Slider';
-
-
-
-
+import SliderDurationToken from "./SliderDurationToken";
+import IconButton from "@material-ui/core/IconButton";
+import DeleteIcon from "@material-ui/icons/Delete";
+import useInterval from "./utils/useInterval";
 
 
 // Material UI components CSS
 const useStyles = makeStyles(() =>
     createStyles({
         root: {
-            marginTop: 60,
+            marginTop: 20,
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: 200,
         },
-        form:{
+        form: {
             display: "flex",
             flexDirection: "row",
             justifyContent: 'space-evenly',
             alignItems: "center",
-            minWidth:700,
+            minWidth: 700,
         },
-        slider:{
-            minWidth:200,
-        }
+        slider: {
+            minWidth: 200,
+            textAlign: "center",
+        },
+        queueContainer: {
+            marginLeft: '70%',
+            marginTop: '-5%',
+            overflowY: 'auto',
+        },
+        queueDiv: {
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+        },
     }),
 );
 
-const marks = [
-    {
-        value: 60,
-        label: '1H',
-    },
-    {
-        value: 120,
-        label: '2H',
-    },
-    {
-        value: 180,
-        label: '3H',
-    },
-    {
-        value: 240,
-        label: '4H',
-    },
-    {
-        value: 300,
-        label: '5H',
-    },
-    {
-        value: 360,
-        label: '6H',
-    },
-    {
-        value: 420,
-        label: '∞',
-    }
-];
 
 interface LoginProps {
     refresh: () => void;
+}
+
+interface Users {
+    index: number,
+    username: string,
+    token_minutes: number
 }
 
 
@@ -71,41 +62,101 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     const classes = useStyles();
 
-    const [value, setValue] = useState<number | null>(null);
+    const [value, setValue] = useState<number | null>(120);
+    const [userIsConnected, setUserIsConnected] = useState(false);
+    const [refresh, setRefresh] = useState<boolean>(false);
+    const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
 
-    const onSliderChange = (val: number | number[]) => {
-        if (val > 360 ){
-            setValue(null);
-        }else {
-            setValue(val as number);
-        }
+
+    const updateSliderValue = (value: number | null): void => {
+        setValue(value);
     }
 
-    const valueToHoursMinutes = (value :number | null) : string => {
-        if (value != null) {
-            let hours = Math.trunc(value / 60);
-            let minutes = (value % 60).toString().padStart(2, "0");
-            return `${hours}h ${minutes}m`
-        }else{
-            return '∞'
+    const fetchUser = async (): Promise<void> => {
+        const result = await axios(process.env.React_App_URL_API + "reservation/state");
+        if (result.data) {
+            setUserIsConnected(true);
         }
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         if (e.currentTarget.username.value !== "") {
-            axios({
-                method: 'post',
-                url: process.env.React_App_URL_API + 'reservation/take',
-                data: {username: e.currentTarget.username.value,
-                    token_minutes: value}
-            })
+            (userIsConnected
+                ? (axios({
+                    method: 'post',
+                    url: process.env.React_App_URL_API + "reservation/queue/join",
+                    data: {
+                        username: e.currentTarget.username.value,
+                        token_minutes: value
+                    }
+                }))
+                : (axios({
+                    method: 'post',
+                    url: process.env.React_App_URL_API + 'reservation/take',
+                    data: {
+                        username: e.currentTarget.username.value,
+                        token_minutes: value
+                    }
+                })))
                 .then(() => {
+                    setRefresh(!refresh);
                     props.refresh();
                 })
-                .catch(err => console.error("ERROR =>" + err));
+                .catch(err => console.error("ERROR =>" + err))
         }
     }
+
+
+    const fetchQueue = async (): Promise<void> => {
+        const result = await axios(process.env.React_App_URL_API + "reservation/queue/state");
+        setUsersInQueue(result.data.queue);
+    }
+
+    const valueToHoursMinutes = (value: number | null): string => {
+        if (value != null) {
+            let hours = Math.trunc(value / 60);
+            let minutes = (value % 60).toString().padStart(2, "0");
+            return `${hours}h${minutes}m`
+        } else {
+            return '∞'
+        }
+    }
+
+    const handleLeaveQueue = (index: number): void => {
+        axios({
+            method: 'post',
+            url: process.env.React_App_URL_API + `reservation/queue/leave/${index}`,
+        })
+            .then(() => {
+                setRefresh(!refresh);
+                props.refresh();
+            })
+            .catch(err => console.error("ERROR =>" + err));
+    }
+
+    const listUser = usersInQueue.map((d, index) =>
+        <div key={index} className={classes.queueDiv}>
+            {index + 1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
+            <IconButton aria-label="delete" onClick={() => handleLeaveQueue(index)}>
+                <DeleteIcon fontSize="small"/>
+            </IconButton>
+        </div>
+    );
+
+
+    useEffect((): void => {
+            fetchUser();
+            fetchQueue();
+        }
+        , [refresh]
+    )
+
+    useInterval(
+        fetchQueue
+        ,
+        10000
+    );
 
     return (
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
@@ -113,26 +164,29 @@ export default function TakeToken(props: LoginProps): ReactElement {
                 <div className={classes.form}>
                     <TextField type="text" id="outlined-basic" label="Username" name="username" autoFocus={true}
                                variant="outlined"/>
-                    <div>
-                            <Typography id="discrete-slider" gutterBottom className={classes.slider}>
-                                Token duration : {valueToHoursMinutes(value)}
-                            </Typography>
-                            <Slider className={classes.slider}
-                                defaultValue={420}
-                                onChange={(event, val) => onSliderChange(val)}
-                                aria-labelledby="discrete-slider"
-                                step={10}
-                                marks={marks}
-                                min={10}
-                                max={420}
-                            />
-                    </div>
-                    <div>
-                        <Button type="submit" variant="contained" color="primary">Take
-                            Token</Button>
-                    </div>
+                    <SliderDurationToken getSliderValue={updateSliderValue}/>
+                    <Box>
+                        {userIsConnected
+                            ? <Box>
+                                <Button variant="contained" style={{backgroundColor: '#12824C', color: '#FFFFFF'}}
+                                        type="submit">Join Queue</Button>
+                            </Box>
+
+                            : <Box>
+                                <Button type="submit" variant="contained" color="primary">Take
+                                    Token</Button>
+                            </Box>
+                        }
+                    </Box>
                 </div>
             </form>
+            {usersInQueue.length >= 1
+                ? < Box className={classes.queueContainer}>
+                    <Typography variant="h6" gutterBottom component="div">Queue:</Typography>
+                    {listUser}
+                </Box>
+                : null
+            }
         </Grid>
     );
 }

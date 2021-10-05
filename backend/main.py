@@ -1,20 +1,20 @@
-from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import FastAPI, Response, status, BackgroundTasks
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-import requests
-from dotenv import load_dotenv
+import asyncio
 import os
 import subprocess
-import asyncio
-import v4l2py
+from collections import deque
+from datetime import datetime, timedelta
+from typing import Optional
 
+import requests
+import v4l2py
+from dotenv import load_dotenv
+from fastapi import FastAPI, Response, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 app = FastAPI()
 load_dotenv()
-
 
 origins = ["*"]
 
@@ -39,13 +39,79 @@ class InputToken(BaseModel):
 
 class Token(BaseModel):
     creation_date: datetime
+    username: str
     expires_date: Optional[datetime]
-    username: Optional[str] = None
+
+
+#
+# Webhook management
+#
+
+
+def teams_webhook(summary: str, activity: str, name_message: str, value_message: str):
+    data = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary": summary,
+        "sections": [{
+            "activityTitle": activity,
+            "facts": [
+                {
+                    "name": name_message,
+                    "value": value_message
+                }
+            ],
+            "markdown": True
+        }]
+    }
+    if os.getenv("WEBHOOK_URL") is not None:
+        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
+
+
+#
+# Token
+#
+
+token = None
+
+
+def check_token_expiration():
+    global token
+    if token and datetime.now() >= token.expires_date:
+        teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                      f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                      'Token duration expired', "")
+        if len(queue) >= 1:
+            token = Token(
+                creation_date=datetime.now(),
+                expires_date=datetime.now() + timedelta(minutes=queue[0].token_minutes) if queue[
+                    0].token_minutes else None,
+                username=queue[0].username,
+            )
+            teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                          f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                          'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
+            queue.popleft()
+        elif len(queue) == 0:
+            teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          f'{token.username} just released {os.getenv("BOARD_NAME")}',
+                          'The board is free', "")
+            token = None
+
+
+async def background_task():
+    global token
+    global queue
+    while True:
+        await asyncio.sleep(1)
+        check_token_expiration()
 
 
 #
 # Webcam management
 #
+
 
 async def async_stream(stream):
     import asyncio
@@ -84,74 +150,19 @@ class WebcamRunner:
     async def video_streamer(self, fps: int):
         if self.cam:
             while True:
-                yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+self.current
-                await asyncio.sleep(1/fps)
+                yield b"--jpgboundary\r\n" + b'Content-Type: image/jpeg\r\n\r\n' + self.current
+                await asyncio.sleep(1 / fps)
         else:
-            yield b"--jpgboundary\r\n"+b'Content-Type: image/jpeg\r\n\r\n'+open('images/image.jpeg', 'rb').read()
+            yield b"--jpgboundary\r\n" + b'Content-Type: image/jpeg\r\n\r\n' + open('images/image.jpeg', 'rb').read()
 
 
 webcam_runner = WebcamRunner()
 
 
-#
-# Webhook management
-#
-
-
-def webhook_data_creation(username: str, message: str, token_creation_date: str = None, token_expire_date: str = None):
-    data = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary":  username+" is using "+os.getenv("BOARD_NAME", ""),
-        "sections": [{
-            "activityTitle": username+" is using "+os.getenv("BOARD_NAME")+" since "+token_creation_date,
-            "facts": [
-                {
-                    "name": message,
-                    "value": token_expire_date
-                }
-            ],
-            "markdown": True
-        }]
-    }
-    if os.getenv("WEBHOOK_URL") is not None:
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
-
-
-def webhook_data_release(username: str, message: str = None):
-    data = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary":  username+" just released "+os.getenv("BOARD_NAME"),
-        "sections": [{
-            "activityTitle": username+" just released "+os.getenv("BOARD_NAME"),
-            "facts": [
-                {
-                    "name": message,
-                }
-            ],
-            "markdown": True
-        }]
-    }
-    if os.getenv("WEBHOOK_URL") is not None:
-        requests.post(url=os.getenv("WEBHOOK_URL"), json=data)
-
-
-async def check_token_expiration():
-    global token
-    while True:
-        await asyncio.sleep(1)
-        if token and datetime.now() >= token.expires_date:
-            webhook_data_release(token.username, "token duration expired")
-            token = None
-
-
 @app.on_event('startup')
 async def app_startup():
     asyncio.create_task(webcam_runner.run_capture())
-    asyncio.create_task(check_token_expiration())
+    asyncio.create_task(background_task())
 
 
 @app.get("/webcam/{fps}")
@@ -190,11 +201,10 @@ def toggle_relay(name: str):
 
 
 #
-# Token
+# Queue
 #
 
-
-token = None
+queue = deque()
 
 
 @app.post("/reservation/take")
@@ -205,11 +215,13 @@ def create_access_token(input_token: InputToken, response: Response):
     if token is None and input_token.token_minutes is not None:
         token = Token(
             creation_date=datetime.now(),
-            expires_date=datetime.now()+timedelta(minutes=input_token.token_minutes),
+            expires_date=datetime.now() + timedelta(minutes=input_token.token_minutes),
             username=input_token.username,
         )
         print("Creation du token : " + str(token))
-        webhook_data_creation(input_token.username, "token claimed untill", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"), token.expires_date.strftime("%d/%m/%Y %H:%M:%S"))
+        teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                      f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                      'token claimed until', f'{token.expires_date.strftime("%d/%m/%Y %H:%M:%S")}')
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': token.expires_date.strftime("%d/%m/%Y %H:%M:%S"),
@@ -221,7 +233,9 @@ def create_access_token(input_token: InputToken, response: Response):
             expires_date=None,
             username=input_token.username,
         )
-        webhook_data_creation(input_token.username, "No expiration time", token.creation_date.strftime("%d/%m/%Y %H:%M:%S"))
+        teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
+                      f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
+                      "No expiration time")
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': None,
@@ -239,16 +253,17 @@ def create_access_token(input_token: InputToken, response: Response):
 # http://127.0.0.1:8000/reservation/release
 def release_token(response: Response):
     global token
+    global queue
     if token is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         r = StatusResponse(message="Token is already free", status=False)
         return r
     else:
         print("Last user => " + token.username)
-        webhook_data_release(token.username, "The board is free")
-        token = None
-        r = StatusResponse(message="Token released", status=True)
-        return r
+        token.expires_date = datetime.now()
+        check_token_expiration()
+    r = StatusResponse(message="Token released", status=True)
+    return r
 
 
 @app.get("/reservation/state")
@@ -270,6 +285,36 @@ async def token_state():
         return None
 
 
+@app.post("/reservation/queue/join")
+def queue_management_add(input_token: InputToken):
+    global queue
+    queue.append(input_token)
+    return {"input_token": input_token, "queue_position": len(queue)}
+
+
+@app.post("/reservation/queue/leave/{index}")
+def queue_management_delete(index: int):
+    global queue
+    if len(queue) >= 1:
+        if index <= len(queue):
+            print(f"{queue[index].username} has left the queue.")
+            teams_webhook(f"{queue[index].username.capitalize()} has left the queue.",
+                          f"{queue[index].username.capitalize()} has left the queue.", "", "")
+            del queue[index]
+            return {"queue": list(queue)}
+        else:
+            r = StatusResponse(message="Index out of bounds", status=True)
+            return r
+    else:
+        r = StatusResponse(message="The queue is empty", status=True)
+        return r
+
+
+@app.get("/reservation/queue/state")
+def get_queue():
+    return {"queue": list(queue)}
+
+
 @app.get("/board")
 # http://127.0.0.1:8000/board
 def get_board():
@@ -277,6 +322,3 @@ def get_board():
         return {"board_name": os.getenv("BOARD_NAME")}
     else:
         return {"board_name": None}
-
-
-
