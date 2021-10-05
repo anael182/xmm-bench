@@ -14,12 +14,12 @@ import useInterval from "./utils/useInterval";
 const useStyles = makeStyles(() =>
     createStyles({
         root: {
-            marginTop: 30,
+            marginTop: 20,
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            height: 200
+            height: 200,
         },
         form: {
             display: "flex",
@@ -34,7 +34,7 @@ const useStyles = makeStyles(() =>
         },
         queueContainer: {
             marginLeft: '70%',
-            marginTop: '-10%',
+            marginTop: '-5%',
             overflowY: 'auto',
         },
         queueDiv: {
@@ -83,32 +83,31 @@ export default function TakeToken(props: LoginProps): ReactElement {
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         if (e.currentTarget.username.value !== "") {
-            if (userIsConnected) {
-                axios({
+            (userIsConnected
+                ? (axios({
                     method: 'post',
                     url: process.env.React_App_URL_API + "reservation/queue/join",
                     data: {
                         username: e.currentTarget.username.value,
                         token_minutes: value
                     }
-                })
-            } else {
-                axios({
+                }))
+                : (axios({
                     method: 'post',
                     url: process.env.React_App_URL_API + 'reservation/take',
                     data: {
                         username: e.currentTarget.username.value,
                         token_minutes: value
                     }
+                })))
+                .then(() => {
+                    setRefresh(!refresh);
+                    props.refresh();
                 })
-                    .then(() => {
-                        setRefresh(!refresh);
-                        props.refresh();
-                    })
-                    .catch(err => console.error("ERROR =>" + err));
-            }
+                .catch(err => console.error("ERROR =>" + err))
         }
     }
+
 
     const fetchQueue = async (): Promise<void> => {
         const result = await axios(process.env.React_App_URL_API + "reservation/queue/state");
