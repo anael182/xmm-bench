@@ -1,0 +1,14 @@
+[Unit]
+Description=xmm-bench-web
+After=network.target
+
+[Service]
+User=korys
+LimitNOFILE=4096
+WorkingDirectory=/home/korys/xmm-bench-web/backend
+ExecStart=/home/korys/xmm-bench-web/backend/venv/bin/uvicorn --proxy-headers --forwarded-allow-ips * --host 0.0.0.0 --root-path=/back main:app
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
