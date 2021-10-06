@@ -3,7 +3,7 @@ import os
 import subprocess
 from collections import deque
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 
 import requests
 import v4l2py
@@ -44,7 +44,7 @@ class Token(BaseModel):
 
 
 class QueueResponse(BaseModel):
-    queue: list[InputToken]
+    queue: List[InputToken]
 
 
 #
