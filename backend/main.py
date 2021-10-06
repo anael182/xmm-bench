@@ -76,8 +76,9 @@ def teams_webhook(summary: str, activity: str, name_message: str, value_message:
 token = None
 
 
-def check_token_expiration():
+async def check_token_expiration():
     global token
+    global queue
     if token and datetime.now() >= token.expires_date:
         teams_webhook(f'{token.username} just released {os.getenv("BOARD_NAME")}',
                       f'{token.username} just released {os.getenv("BOARD_NAME")}',
@@ -101,12 +102,10 @@ def check_token_expiration():
 
 
 async def background_task():
-    global token
-    global queue
     while True:
         try:
             await asyncio.sleep(1)
-            check_token_expiration()
+            await check_token_expiration()
         except:
             print("Oops! Something went wrong.")
 
@@ -264,6 +263,7 @@ def release_token(response: Response):
     else:
         print("Last user => " + token.username)
         token.expires_date = datetime.now()
+        check_token_expiration()
     r = StatusResponse(message="Token released", status=True)
     return r
 
