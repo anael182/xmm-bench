@@ -104,8 +104,11 @@ async def background_task():
     global token
     global queue
     while True:
-        await asyncio.sleep(1)
-        check_token_expiration()
+        try:
+            await asyncio.sleep(1)
+            check_token_expiration()
+        except:
+            print("Oops! Something went wrong.")
 
 
 #
@@ -235,7 +238,7 @@ def create_access_token(input_token: InputToken, response: Response):
         )
         teams_webhook(f'{token.username}  is using {os.getenv("BOARD_NAME")}',
                       f'{token.username} is using {os.getenv("BOARD_NAME")} since {token.creation_date.strftime("%d/%m/%Y %H:%M:%S")}',
-                      "No expiration time")
+                      "No expiration time", "")
         return {
             'creation_date': token.creation_date.strftime("%d/%m/%Y %H:%M:%S"),
             'expires_date': None,
@@ -261,7 +264,6 @@ def release_token(response: Response):
     else:
         print("Last user => " + token.username)
         token.expires_date = datetime.now()
-        check_token_expiration()
     r = StatusResponse(message="Token released", status=True)
     return r
 
