@@ -6,6 +6,7 @@ import {Alert} from "@material-ui/lab";
 import useInterval from "./utils/useInterval";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {Grid} from "@material-ui/core";
+import moment from 'moment';
 
 const useStyles = makeStyles(() =>
     createStyles({
@@ -70,9 +71,9 @@ export default function Login(): ReactElement {
                 ? <TakeToken refresh={refreshComponent}/>
                 : <div>
                     <Alert severity="success" className={classes.alert}>The board is taken
-                        by {user.username} since {user.creation_date} ⌛.
+                        by {user.username} since {moment(user.creation_date).format("DD/MM/YYYY HH:mm")} ⌛.
                         {user.expires_date != null
-                            ? <span> The token will expire on {user.expires_date}.</span>
+                            ? <span> The token will expire on {moment(user.expires_date).format("DD/MM/YYYY HH:mm")}.</span>
                             : <span> There is no expires date for this token.</span>
                         }
                     </Alert>
