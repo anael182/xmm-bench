@@ -1,4 +1,4 @@
-import {Box, Button, Typography} from '@material-ui/core';
+import {Box, Button, Paper, Typography} from '@material-ui/core';
 import axios from "axios";
 import {createStyles, makeStyles} from '@material-ui/core/styles';
 import React, {FormEvent, ReactElement, useEffect, useState} from "react";
@@ -17,18 +17,17 @@ const useStyles = makeStyles(() =>
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-around',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             height: 200,
-            border: "1px solid red"
-
         },
         form: {
+            marginTop: 30,
             display: "flex",
             flexDirection: "row",
             justifyContent: 'space-evenly',
             alignItems: "center",
             minWidth: 700,
-            border: "1px solid blue"
+
         },
         slider: {
             minWidth: 200,
@@ -37,7 +36,7 @@ const useStyles = makeStyles(() =>
         queueContainer: {
             display: "flex",
             flexDirection: "column",
-            border: "1px solid",
+            marginTop: 20
         },
         queueDiv: {
             display: "flex",
@@ -45,13 +44,12 @@ const useStyles = makeStyles(() =>
             justifyContent: "space-between",
             alignItems: "center",
         },
-        boardStatus: {
-            display: "flex",
-            flexDirection: "column",
-            border: "1px solid",
-
-
+        statusDiv: {
+            marginTop: 15
         },
+        ghostdiv: {
+            width: 200,
+        }
     }),
 );
 
@@ -75,6 +73,9 @@ export default function TakeToken(props: LoginProps): ReactElement {
     const [userIsConnected, setUserIsConnected] = useState(false);
     const [refresh, setRefresh] = useState<boolean>(false);
     const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
+    const [boardOneStatus, setBoardOneStatus] = useState<string | null>(null);
+    const [boardTwoStatus, setBoardTwoStatus] = useState<string | null>(null);
+    const [boardThreeStatus, setBoardThreeStatus] = useState<string | null>(null);
 
 
     const updateSliderValue = (value: number | null): void => {
@@ -86,6 +87,15 @@ export default function TakeToken(props: LoginProps): ReactElement {
         if (result.data) {
             setUserIsConnected(true);
         }
+    }
+
+    const fetchBoards = async (): Promise<void> => {
+        const fetchOne = await axios(process.env.React_App_BOARD_ONE + "reservation/state");
+        const fetchTwo = await axios(process.env.React_App_BOARD_TWO + "reservation/state");
+        const fetchThree = await axios(process.env.React_App_BOARD_THREE + "reservation/state");
+        fetchOne.data == null ? setBoardOneStatus(null) : setBoardOneStatus(fetchOne.data.username);
+        fetchTwo.data == null ? setBoardTwoStatus(null) : setBoardTwoStatus(fetchTwo.data.username);
+        fetchThree.data == null ? setBoardThreeStatus(null) : setBoardThreeStatus(fetchThree.data.username);
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
@@ -153,10 +163,11 @@ export default function TakeToken(props: LoginProps): ReactElement {
         </div>
     );
 
-
     useEffect((): void => {
             fetchUser();
             fetchQueue();
+            fetchBoards();
+            console.log('test');
         }
         , [refresh]
     )
@@ -169,9 +180,26 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     return (
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
-            < Box className={classes.boardStatus}>
+            < Box className={classes.queueContainer}>
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
-                {listUser}
+                <div className={classes.statusDiv}>
+                    X4 Bench 1: {boardOneStatus == null
+                    ? "Free"
+                    : <span>{boardOneStatus}</span>
+                }
+                </div>
+                <div className={classes.statusDiv}>
+                    X4 Bench 2: {boardTwoStatus == null
+                    ? "Free"
+                    : <span>{boardTwoStatus}</span>
+                }
+                </div>
+                <div className={classes.statusDiv}>
+                    X5 Bench: {boardThreeStatus == null
+                    ? "Free"
+                    : <span>{boardThreeStatus}</span>
+                }
+                </div>
             </Box>
             <form onSubmit={handleSubmit}>
                 <Box className={classes.form}>
@@ -198,7 +226,9 @@ export default function TakeToken(props: LoginProps): ReactElement {
                     <Typography variant="h6" gutterBottom component="div">Queue:</Typography>
                     {listUser}
                 </Box>
-                : <Box className={classes.queueContainer}/>
+                : <Box className={classes.queueContainer}>
+                    <Paper elevation={0} className={classes.ghostdiv}/>
+                </Box>
             }
         </Grid>
     );
