@@ -14,12 +14,13 @@ import useInterval from "./utils/useInterval";
 const useStyles = makeStyles(() =>
     createStyles({
         root: {
-            marginTop: 20,
             display: 'flex',
             flexDirection: 'row',
-            justifyContent: 'center',
+            justifyContent: 'space-around',
             alignItems: 'center',
             height: 200,
+            border: "1px solid red"
+
         },
         form: {
             display: "flex",
@@ -27,21 +28,29 @@ const useStyles = makeStyles(() =>
             justifyContent: 'space-evenly',
             alignItems: "center",
             minWidth: 700,
+            border: "1px solid blue"
         },
         slider: {
             minWidth: 200,
             textAlign: "center",
         },
         queueContainer: {
-            marginLeft: '70%',
-            marginTop: '-5%',
-            overflowY: 'auto',
+            display: "flex",
+            flexDirection: "column",
+            border: "1px solid",
         },
         queueDiv: {
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
+        },
+        boardStatus: {
+            display: "flex",
+            flexDirection: "column",
+            border: "1px solid",
+
+
         },
     }),
 );
@@ -160,8 +169,12 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     return (
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
+            < Box className={classes.boardStatus}>
+                <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
+                {listUser}
+            </Box>
             <form onSubmit={handleSubmit}>
-                <div className={classes.form}>
+                <Box className={classes.form}>
                     <TextField type="text" id="outlined-basic" label="Username" name="username" autoFocus={true}
                                variant="outlined"/>
                     <SliderDurationToken getSliderValue={updateSliderValue}/>
@@ -178,17 +191,15 @@ export default function TakeToken(props: LoginProps): ReactElement {
                             </Box>
                         }
                     </Box>
-                </div>
+                </Box>
             </form>
             {usersInQueue.length >= 1
                 ? < Box className={classes.queueContainer}>
                     <Typography variant="h6" gutterBottom component="div">Queue:</Typography>
                     {listUser}
                 </Box>
-                : null
+                : <Box className={classes.queueContainer}/>
             }
         </Grid>
     );
 }
-    
-
