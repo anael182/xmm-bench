@@ -48,7 +48,7 @@ const useStyles = makeStyles(() =>
             marginTop: 15
         },
         ghostdiv: {
-            width: 200,
+            width: 210,
         }
     }),
 );
@@ -68,6 +68,18 @@ interface Users {
 export default function TakeToken(props: LoginProps): ReactElement {
 
     const classes = useStyles();
+
+    // @ts-ignore
+    let urlOne = process.env.React_App_BOARD.split('');
+    let urlTwo = [...urlOne];
+    let urlThree = [...urlOne];
+    urlOne.splice(7, 0, 'x4-bench');
+    urlTwo.splice(7, 0, 'x4-bench-2');
+    urlThree.splice(7, 0, 'x5-bench');
+    const boardOne = urlOne.join('');
+    const boardTwo = urlTwo.join('');
+    const boardThree = urlThree.join('');
+
 
     const [value, setValue] = useState<number | null>(120);
     const [userIsConnected, setUserIsConnected] = useState(false);
@@ -90,9 +102,9 @@ export default function TakeToken(props: LoginProps): ReactElement {
     }
 
     const fetchBoards = async (): Promise<void> => {
-        const fetchOne = await axios(process.env.React_App_BOARD_ONE + "reservation/state");
-        const fetchTwo = await axios(process.env.React_App_BOARD_TWO + "reservation/state");
-        const fetchThree = await axios(process.env.React_App_BOARD_THREE + "reservation/state");
+        const fetchOne = await axios(boardOne + "reservation/state");
+        const fetchTwo = await axios(boardTwo + "reservation/state");
+        const fetchThree = await axios(boardThree + "reservation/state");
         fetchOne.data == null ? setBoardOneStatus(null) : setBoardOneStatus(fetchOne.data.username);
         fetchTwo.data == null ? setBoardTwoStatus(null) : setBoardTwoStatus(fetchTwo.data.username);
         fetchThree.data == null ? setBoardThreeStatus(null) : setBoardThreeStatus(fetchThree.data.username);
@@ -167,9 +179,8 @@ export default function TakeToken(props: LoginProps): ReactElement {
             fetchUser();
             fetchQueue();
             fetchBoards();
-            console.log('test');
         }
-        , [refresh]
+        , [refresh, boardOneStatus, boardTwoStatus, boardThreeStatus]
     )
 
     useInterval(
