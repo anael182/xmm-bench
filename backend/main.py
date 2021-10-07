@@ -124,9 +124,10 @@ async def background_task():
         try:
             await asyncio.sleep(1)
             await check_token_expiration()
-        except Exception:
-            print("Oops! Something went wrong.")
-
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            print("Oops! Something went wrong. %r" % e)
 
 #
 # Webcam management
