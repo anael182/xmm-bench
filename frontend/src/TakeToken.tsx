@@ -47,7 +47,7 @@ const useStyles = makeStyles(() =>
         statusDiv: {
             marginTop: 15
         },
-        ghostdiv: {
+        ghostDiv: {
             width: 210,
         }
     }),
@@ -64,30 +64,23 @@ interface Users {
     token_minutes: number
 }
 
+interface Boards {
+    index: number,
+    board_name: string,
+}
+
 
 export default function TakeToken(props: LoginProps): ReactElement {
 
     const classes = useStyles();
-
-    // @ts-ignore
-    let urlOne = process.env.React_App_BOARD.split('');
-    let urlTwo = [...urlOne];
-    let urlThree = [...urlOne];
-    urlOne.splice(7, 0, 'x4-bench');
-    urlTwo.splice(7, 0, 'x4-bench-2');
-    urlThree.splice(7, 0, 'x5-bench');
-    const boardOne = urlOne.join('');
-    const boardTwo = urlTwo.join('');
-    const boardThree = urlThree.join('');
 
 
     const [value, setValue] = useState<number | null>(120);
     const [userIsConnected, setUserIsConnected] = useState(false);
     const [refresh, setRefresh] = useState<boolean>(false);
     const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
-    const [boardOneStatus, setBoardOneStatus] = useState<string | null>(null);
-    const [boardTwoStatus, setBoardTwoStatus] = useState<string | null>(null);
-    const [boardThreeStatus, setBoardThreeStatus] = useState<string | null>(null);
+    const [boardList, setBoardList] = useState<Boards[]>([]);
+    const [boardStatus, setBoardStatus] = useState<any[]>([]);
 
 
     const updateSliderValue = (value: number | null): void => {
@@ -101,13 +94,18 @@ export default function TakeToken(props: LoginProps): ReactElement {
         }
     }
 
+    const fetchBoardList = async (): Promise<void> => {
+        const result = await axios(process.env.React_App_URL_API + "board-list");
+        if (result.data) {
+            setBoardList(result.data.board_list);
+        }
+    }
+
     const fetchBoards = async (): Promise<void> => {
-        const fetchOne = await axios(boardOne + "reservation/state");
-        const fetchTwo = await axios(boardTwo + "reservation/state");
-        const fetchThree = await axios(boardThree + "reservation/state");
-        fetchOne.data == null ? setBoardOneStatus(null) : setBoardOneStatus(fetchOne.data.username);
-        fetchTwo.data == null ? setBoardTwoStatus(null) : setBoardTwoStatus(fetchTwo.data.username);
-        fetchThree.data == null ? setBoardThreeStatus(null) : setBoardThreeStatus(fetchThree.data.username);
+        await axios.all(boardList.map(l => axios.get("http://" + l + process.env.React_App_BOARD + "reservation/state")))
+            .then(axios.spread(function (...res) {
+                console.log(res.map(l => l.data))
+            }));
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
@@ -175,12 +173,20 @@ export default function TakeToken(props: LoginProps): ReactElement {
         </div>
     );
 
+    const listBoards = boardList.map((d, index) =>
+        <div key={index} className={classes.queueDiv}>
+            {d} --
+        </div>
+    );
+
+
     useEffect((): void => {
             fetchUser();
             fetchQueue();
             fetchBoards();
+            fetchBoardList();
         }
-        , [refresh, boardOneStatus, boardTwoStatus, boardThreeStatus]
+        , [refresh]
     )
 
     useInterval(
@@ -193,24 +199,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             < Box className={classes.queueContainer}>
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
-                <div className={classes.statusDiv}>
-                    X4 Bench 1: {boardOneStatus == null
-                    ? "Free"
-                    : <span>{boardOneStatus}</span>
-                }
-                </div>
-                <div className={classes.statusDiv}>
-                    X4 Bench 2: {boardTwoStatus == null
-                    ? "Free"
-                    : <span>{boardTwoStatus}</span>
-                }
-                </div>
-                <div className={classes.statusDiv}>
-                    X5 Bench: {boardThreeStatus == null
-                    ? "Free"
-                    : <span>{boardThreeStatus}</span>
-                }
-                </div>
+                {listBoards}
             </Box>
             <form onSubmit={handleSubmit}>
                 <Box className={classes.form}>
@@ -238,7 +227,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
                     {listUser}
                 </Box>
                 : <Box className={classes.queueContainer}>
-                    <Paper elevation={0} className={classes.ghostdiv}/>
+                    <Paper elevation={0} className={classes.ghostDiv}/>
                 </Box>
             }
         </Grid>

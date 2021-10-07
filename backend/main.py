@@ -47,6 +47,14 @@ class QueueResponse(BaseModel):
     queue: List[InputToken]
 
 
+class Board(BaseModel):
+    board_name: str
+
+
+class BoardList(BaseModel):
+    board_list: List[Board]
+
+
 #
 # Webhook management
 #
@@ -166,7 +174,7 @@ class WebcamRunner:
     async def run_capture(self):
         if self.cam:
             async for frame in async_stream(
-                v4l2py.device.VideoStream(self.cam.video_capture)
+                    v4l2py.device.VideoStream(self.cam.video_capture)
             ):
                 self.current = frame
 
@@ -174,9 +182,9 @@ class WebcamRunner:
         if self.cam:
             while True:
                 yield (
-                    b"--jpgboundary\r\n"
-                    + b"Content-Type: image/jpeg\r\n\r\n"
-                    + self.current
+                        b"--jpgboundary\r\n"
+                        + b"Content-Type: image/jpeg\r\n\r\n"
+                        + self.current
                 )
                 await asyncio.sleep(1 / fps)
         else:
@@ -292,6 +300,14 @@ async def get_board():
         return {"board_name": os.getenv("BOARD_NAME")}
     else:
         return {"board_name": None}
+
+
+@app.get("/board-list")
+async def get_board_list():
+    if os.getenv("BOARD_LIST") is not None:
+        return {"board_list": os.getenv("BOARD_LIST").split(",")}
+    else:
+        return {"board_list": None}
 
 
 #
