@@ -102,9 +102,14 @@ export default function TakeToken(props: LoginProps): ReactElement {
     }
 
     const fetchBoards = async (): Promise<void> => {
+        let boardStatusCopy = [...boardStatus];
         await axios.all(boardList.map(l => axios.get("http://" + l + process.env.React_App_BOARD + "reservation/state")))
             .then(axios.spread(function (...res) {
-                console.log(res.map(l => l.data))
+                res.map((l, i) => {
+                    //l.data != null ? console.log(l.data.username) : console.log(l.data);
+                    l.data != null ? boardStatusCopy[i] = l.data.username : boardStatusCopy[i] = l.data;
+                })
+                setBoardStatus(boardStatusCopy);
             }));
     }
 
@@ -175,7 +180,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     const listBoards = boardList.map((d, index) =>
         <div key={index} className={classes.queueDiv}>
-            {d} --
+            {d} -- {boardStatus[index] == null ? "Free" : boardStatus[index]}
         </div>
     );
 
@@ -185,6 +190,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
             fetchQueue();
             fetchBoards();
             fetchBoardList();
+            console.log("test memory usage");
         }
         , [refresh]
     )
