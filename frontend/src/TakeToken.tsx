@@ -106,11 +106,11 @@ export default function TakeToken(props: LoginProps): ReactElement {
         await axios.all(boardList.map(l => axios.get("http://" + l + process.env.React_App_BOARD + "reservation/state")))
             .then(axios.spread(function (...res) {
                 res.map((l, i) => {
-                    //l.data != null ? console.log(l.data.username) : console.log(l.data);
                     l.data != null ? boardStatusCopy[i] = l.data.username : boardStatusCopy[i] = l.data;
+                    return null;
                 })
-                setBoardStatus(boardStatusCopy);
             }));
+        setBoardStatus(boardStatusCopy);
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
@@ -178,19 +178,11 @@ export default function TakeToken(props: LoginProps): ReactElement {
         </div>
     );
 
-    const listBoards = boardList.map((d, index) =>
-        <div key={index} className={classes.queueDiv}>
-            {d} -- {boardStatus[index] == null ? "Free" : boardStatus[index]}
-        </div>
-    );
-
-
     useEffect((): void => {
             fetchUser();
             fetchQueue();
             fetchBoards();
             fetchBoardList();
-            console.log("test memory usage");
         }
         , [refresh]
     )
@@ -205,7 +197,11 @@ export default function TakeToken(props: LoginProps): ReactElement {
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             < Box className={classes.queueContainer}>
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
-                {listBoards}
+                {boardList.map((d, index) =>
+                    <div key={index} className={classes.queueDiv}>
+                        {d} -- {boardStatus[index] == null ? "Free" : boardStatus[index]}
+                    </div>
+                )}
             </Box>
             <form onSubmit={handleSubmit}>
                 <Box className={classes.form}>
