@@ -64,11 +64,6 @@ interface Users {
     token_minutes: number
 }
 
-interface Boards {
-    index: number,
-    board_name: string,
-}
-
 
 export default function TakeToken(props: LoginProps): ReactElement {
 
@@ -79,7 +74,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
     const [userIsConnected, setUserIsConnected] = useState(false);
     const [refresh, setRefresh] = useState<boolean>(false);
     const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
-    const [boardList, setBoardList] = useState<Boards[]>([]);
+    const [boardList, setBoardList] = useState<string[]>([]);
     const [boardStatus, setBoardStatus] = useState<any[]>([]);
 
 
@@ -103,7 +98,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     const fetchBoards = async (): Promise<void> => {
         let boardStatusCopy = [...boardStatus];
-        await axios.all(boardList.map(l => axios.get("http://" + l + process.env.React_App_BOARD + "reservation/state")))
+        await axios.all(boardList.map(l => axios.get("http://" + l + "reservation/state")))
             .then(axios.spread(function (...res) {
                 res.map((l, i) => {
                     l.data != null ? boardStatusCopy[i] = l.data.username : boardStatusCopy[i] = l.data;
@@ -184,6 +179,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
             fetchBoards();
             fetchBoardList();
         }
+        // eslint-disable-next-line
         , [refresh]
     )
 
@@ -199,7 +195,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
                 {boardList.map((d, index) =>
                     <div key={index} className={classes.queueDiv}>
-                        {d} -- {boardStatus[index] == null ? "Free" : boardStatus[index]}
+                        {boardList[index].replace(".korys.io/back/", '')} -- {boardStatus[index] == null ? "Free" : boardStatus[index]}
                     </div>
                 )}
             </Box>
