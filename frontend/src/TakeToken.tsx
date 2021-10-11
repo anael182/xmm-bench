@@ -69,12 +69,11 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     const classes = useStyles();
 
-
     const [value, setValue] = useState<number | null>(120);
     const [userIsConnected, setUserIsConnected] = useState(false);
     const [refresh, setRefresh] = useState<boolean>(false);
     const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
-    const [boardList, setBoardList] = useState<any[]>([]);
+    const [boardList, setBoardList] = useState<string[] | null>(null);
     const [boardStatus, setBoardStatus] = useState<string[]>([]);
     const [boardNames, setBoardNames] = useState<string[]>([]);
 
@@ -97,7 +96,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
         }
     }
 
-    const fetchBoardsNames = async (): Promise<void> => {
+    const fetchBoardsUsers = async (): Promise<void> => {
         let boardNamesCopy = [...boardNames];
         if (boardList) {
             await axios.all(boardList.map(l => axios.get("http://" + l + "board")))
@@ -112,7 +111,6 @@ export default function TakeToken(props: LoginProps): ReactElement {
         }
     }
 
-
     const fetchBoards = async (): Promise<void> => {
         let boardStatusCopy = [...boardStatus];
         if (boardList) {
@@ -123,8 +121,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
                             return null;
                         })
                     }
-                ))
-            ;
+                ));
             setBoardStatus(boardStatusCopy);
         }
     }
@@ -133,22 +130,22 @@ export default function TakeToken(props: LoginProps): ReactElement {
         e.preventDefault();
         if (e.currentTarget.username.value !== "") {
             (userIsConnected
-                ? (axios({
+                ? axios({
                     method: 'post',
                     url: process.env.React_App_URL_API + "reservation/queue/join",
                     data: {
                         username: e.currentTarget.username.value,
                         token_minutes: value
                     }
-                }))
-                : (axios({
+                })
+                : axios({
                     method: 'post',
                     url: process.env.React_App_URL_API + 'reservation/take',
                     data: {
                         username: e.currentTarget.username.value,
                         token_minutes: value
                     }
-                })))
+                }))
                 .then(() => {
                     setRefresh(!refresh);
                     props.refresh();
@@ -156,7 +153,6 @@ export default function TakeToken(props: LoginProps): ReactElement {
                 .catch(err => console.error("ERROR =>" + err))
         }
     }
-
 
     const fetchQueue = async (): Promise<void> => {
         const result = await axios(process.env.React_App_URL_API + "reservation/queue/state");
@@ -185,25 +181,16 @@ export default function TakeToken(props: LoginProps): ReactElement {
             .catch(err => console.error("ERROR =>" + err));
     }
 
-    const listUser = usersInQueue.map((d, index) =>
-        <div key={index} className={classes.queueDiv}>
-            {index + 1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
-            <IconButton aria-label="delete" onClick={() => handleLeaveQueue(index)}>
-                <DeleteIcon fontSize="small"/>
-            </IconButton>
-        </div>
-    );
-
     useEffect((): void => {
-            fetchBoardsNames();
+            fetchBoardsUsers();
             fetchUser();
             fetchQueue();
             fetchBoards();
             fetchBoardList();
-            console.log("test memory usage");
+            console.log("fdfdsfsd");
         }
         // eslint-disable-next-line
-        , [refresh]
+        , [refresh, value]
     )
 
     useInterval(
@@ -213,13 +200,14 @@ export default function TakeToken(props: LoginProps): ReactElement {
     );
 
     return (
+
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             < Box className={classes.queueContainer}>
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
-                {(boardList)
+                {boardList
                     ? boardList.map((d, index) =>
                         <div key={index} className={classes.queueDiv}>
-                            {boardNames[index]} -- {boardStatus[index] == null ? "Free" : boardStatus[index].charAt(0).toUpperCase() + boardStatus[index].slice(1)}
+                            {boardNames[index] == null ? "Fetching" : boardNames[index]} -- {boardStatus[index] == null ? "Free" : boardStatus[index].charAt(0).toUpperCase() + boardStatus[index].slice(1)}
                         </div>)
                     : <div className={classes.queueDiv}/>
                 }
@@ -247,7 +235,14 @@ export default function TakeToken(props: LoginProps): ReactElement {
             {usersInQueue.length >= 1
                 ? < Box className={classes.queueContainer}>
                     <Typography variant="h6" gutterBottom component="div">Queue:</Typography>
-                    {listUser}
+                    {usersInQueue.map((d, index) =>
+                        <div key={index} className={classes.queueDiv}>
+                            {index + 1} -- {d.username} -- {valueToHoursMinutes(d.token_minutes)}
+                            <IconButton aria-label="delete" onClick={() => handleLeaveQueue(index)}>
+                                <DeleteIcon fontSize="small"/>
+                            </IconButton>
+                        </div>
+                    )}
                 </Box>
                 : <Box className={classes.queueContainer}>
                     <Paper elevation={0} className={classes.ghostDiv}/>

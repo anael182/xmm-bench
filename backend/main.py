@@ -137,10 +137,10 @@ async def background_task():
         except Exception as e:
             print("Oops! Something went wrong. %r" % e)
 
+
 #
 # Webcam management
 #
-
 
 async def async_stream(stream):
     import asyncio
