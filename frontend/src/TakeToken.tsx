@@ -74,8 +74,9 @@ export default function TakeToken(props: LoginProps): ReactElement {
     const [userIsConnected, setUserIsConnected] = useState(false);
     const [refresh, setRefresh] = useState<boolean>(false);
     const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
-    const [boardList, setBoardList] = useState<string[]>([]);
-    const [boardStatus, setBoardStatus] = useState<any[]>([]);
+    const [boardList, setBoardList] = useState<any[]>([]);
+    const [boardStatus, setBoardStatus] = useState<string[]>([]);
+    const [boardNames, setBoardNames] = useState<string[]>([]);
 
 
     const updateSliderValue = (value: number | null): void => {
@@ -90,22 +91,42 @@ export default function TakeToken(props: LoginProps): ReactElement {
     }
 
     const fetchBoardList = async (): Promise<void> => {
-        const result = await axios(process.env.React_App_URL_API + "board-list");
-        if (result.data) {
-            setBoardList(result.data.board_list);
+        const resultBoardList = await axios(process.env.React_App_URL_API + "board-list");
+        if (resultBoardList.data) {
+            setBoardList(resultBoardList.data.board_list);
         }
     }
 
+    const fetchBoardsNames = async (): Promise<void> => {
+        let boardNamesCopy = [...boardNames];
+        if (boardList) {
+            await axios.all(boardList.map(l => axios.get("http://" + l + "board")))
+                .then(axios.spread(function (...res) {
+                        res.map((l, i) => {
+                            l.data != null ? boardNamesCopy[i] = l.data.board_name : boardNamesCopy[i] = l.data;
+                            return null
+                        })
+                    }
+                ));
+            setBoardNames(boardNamesCopy);
+        }
+    }
+
+
     const fetchBoards = async (): Promise<void> => {
         let boardStatusCopy = [...boardStatus];
-        await axios.all(boardList.map(l => axios.get("http://" + l + "reservation/state")))
-            .then(axios.spread(function (...res) {
-                res.map((l, i) => {
-                    l.data != null ? boardStatusCopy[i] = l.data.username : boardStatusCopy[i] = l.data;
-                    return null;
-                })
-            }));
-        setBoardStatus(boardStatusCopy);
+        if (boardList) {
+            await axios.all(boardList.map(l => axios.get("http://" + l + "reservation/state")))
+                .then(axios.spread(function (...res) {
+                        res.map((l, i) => {
+                            l.data != null ? boardStatusCopy[i] = l.data.username : boardStatusCopy[i] = l.data;
+                            return null;
+                        })
+                    }
+                ))
+            ;
+            setBoardStatus(boardStatusCopy);
+        }
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
@@ -174,10 +195,12 @@ export default function TakeToken(props: LoginProps): ReactElement {
     );
 
     useEffect((): void => {
+            fetchBoardsNames();
             fetchUser();
             fetchQueue();
             fetchBoards();
             fetchBoardList();
+            console.log("test memory usage");
         }
         // eslint-disable-next-line
         , [refresh]
@@ -193,11 +216,13 @@ export default function TakeToken(props: LoginProps): ReactElement {
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             < Box className={classes.queueContainer}>
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
-                {boardList.map((d, index) =>
-                    <div key={index} className={classes.queueDiv}>
-                        {boardList[index].replace(".korys.io/back/", '')} -- {boardStatus[index] == null ? "Free" : boardStatus[index]}
-                    </div>
-                )}
+                {(boardList)
+                    ? boardList.map((d, index) =>
+                        <div key={index} className={classes.queueDiv}>
+                            {boardNames[index]} -- {boardStatus[index] == null ? "Free" : boardStatus[index].charAt(0).toUpperCase() + boardStatus[index].slice(1)}
+                        </div>)
+                    : <div className={classes.queueDiv}/>
+                }
             </Box>
             <form onSubmit={handleSubmit}>
                 <Box className={classes.form}>
