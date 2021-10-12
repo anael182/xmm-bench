@@ -64,6 +64,11 @@ interface Users {
     token_minutes: number
 }
 
+interface Board {
+    board_name: string,
+    board_status: string,
+}
+
 
 export default function TakeToken(props: LoginProps): ReactElement {
 
@@ -73,9 +78,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
     const [userIsConnected, setUserIsConnected] = useState(false);
     const [refresh, setRefresh] = useState<boolean>(false);
     const [usersInQueue, setUsersInQueue] = useState<Users[]>([]);
-    const [boardList, setBoardList] = useState<string[] | null>(null);
-    const [boardStatus, setBoardStatus] = useState<string[]>([]);
-    const [boardNames, setBoardNames] = useState<string[]>([]);
+    const [boardStatus, setBoardStatus] = useState<Board[]>([]);
 
 
     const updateSliderValue = (value: number | null): void => {
@@ -89,42 +92,21 @@ export default function TakeToken(props: LoginProps): ReactElement {
         }
     }
 
-    const fetchBoardList = async (): Promise<void> => {
-        const resultBoardList = await axios(process.env.React_App_URL_API + "board-list");
-        if (resultBoardList.data) {
-            setBoardList(resultBoardList.data.board_list);
-        }
-    }
-
-    const fetchBoardsUsers = async (): Promise<void> => {
-        let boardNamesCopy = [...boardNames];
-        if (boardList) {
-            await axios.all(boardList.map(l => axios.get("http://" + l + "board")))
-                .then(axios.spread(function (...res) {
-                        res.map((l, i) => {
-                            l.data != null ? boardNamesCopy[i] = l.data.board_name : boardNamesCopy[i] = l.data;
-                            return null
-                        })
-                    }
-                ));
-            setBoardNames(boardNamesCopy);
-        }
-    }
-
     const fetchBoards = async (): Promise<void> => {
-        let boardStatusCopy = [...boardStatus];
-        if (boardList) {
-            await axios.all(boardList.map(l => axios.get("http://" + l + "reservation/state")))
-                .then(axios.spread(function (...res) {
-                        res.map((l, i) => {
-                            l.data != null ? boardStatusCopy[i] = l.data.username : boardStatusCopy[i] = l.data;
-                            return null;
-                        })
-                    }
-                ));
-            setBoardStatus(boardStatusCopy);
+        const resultBoardList = await axios(process.env.React_App_URL_API + "board-list");
+        if (! resultBoardList.data) {
+            return;
         }
+        let newBoardStatus = [] as Board[];
+        for (let boardUrl of resultBoardList.data.board_list) {
+            let status = await axios.get("http://" + boardUrl + "reservation/state");
+            let name = await axios.get("http://" + boardUrl + "board");
+
+            newBoardStatus.push({board_name: name.data.board_name, board_status: (status.data == null)? "Free": status.data.username}            );
+        }
+        setBoardStatus(newBoardStatus);
     }
+
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
@@ -182,15 +164,13 @@ export default function TakeToken(props: LoginProps): ReactElement {
     }
 
     useEffect((): void => {
-            fetchBoardsUsers();
+            fetchBoards();
             fetchUser();
             fetchQueue();
-            fetchBoards();
-            fetchBoardList();
-            console.log("fdfdsfsd");
+            console.log(boardStatus);
         }
         // eslint-disable-next-line
-        , [refresh, value]
+        , [refresh]
     )
 
     useInterval(
@@ -204,10 +184,10 @@ export default function TakeToken(props: LoginProps): ReactElement {
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             < Box className={classes.queueContainer}>
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
-                {boardList
-                    ? boardList.map((d, index) =>
-                        <div key={index} className={classes.queueDiv}>
-                            {boardNames[index] == null ? "Fetching" : boardNames[index]} -- {boardStatus[index] == null ? "Free" : boardStatus[index].charAt(0).toUpperCase() + boardStatus[index].slice(1)}
+                {boardStatus && boardStatus.length > 1
+                    ? boardStatus.map(board =>
+                        <div key={board.board_name} className={classes.queueDiv}>
+                            {board.board_name} -- {board.board_status}
                         </div>)
                     : <div className={classes.queueDiv}/>
                 }

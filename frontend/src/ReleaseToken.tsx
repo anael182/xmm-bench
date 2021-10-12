@@ -32,7 +32,6 @@ export default function ReleaseToken(props: LoginProps): ReactElement {
             url: process.env.React_App_URL_API + 'reservation/release',
         })
             .then(() => {
-
                 props.refresh();
             })
             .catch(err => console.error("ERROR =>" + err));
