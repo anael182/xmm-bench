@@ -12,6 +12,9 @@ from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from tortoise.contrib.fastapi import register_tortoise
+
+from models import *
 
 app = FastAPI()
 load_dotenv()
@@ -24,6 +27,14 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+register_tortoise(
+    app,
+    db_url="sqlite://xmm-bench.db",
+    modules={"models": ["models"]},
+    generate_schemas=True,
+    add_exception_handlers=True
 )
 
 
@@ -85,7 +96,7 @@ def teams_webhook(summary: str, activity: str, name_message: str, value_message:
 token = None
 
 
-def take_token(input_token):
+def take_token(input_token: InputToken):
     global token
     token = Token(
         creation_date=datetime.now(),
@@ -94,6 +105,7 @@ def take_token(input_token):
         else None,
         username=input_token.username,
     )
+
     teams_webhook(
         f'{token.username} is using {os.getenv("BOARD_NAME")}',
         f'{token.username} is using {os.getenv("BOARD_NAME")}'
@@ -235,11 +247,29 @@ async def toggle_relay(name: str):
 queue = deque()
 
 
+#
+# API
+#
+
+
+# Il reste a ajouter le gestion du cas du duration_token qui est null
 @app.post("/reservation/take")
 async def create_access_token(input_token: InputToken, response: Response):
     global token
     if token is None:
         take_token(input_token)
+        check_user_exists = await UserDB.filter(username_user=input_token.username).exists()
+        print(input_token.token_minutes)
+        if (check_user_exists):
+            user_do_exist = await UserDB_Pydantic.from_queryset_single(UserDB.get(username_user=input_token.username))
+            await TokenDB.create(creation_date_token=token.creation_date,
+                                 duration_token=input_token.token_minutes if input_token.token_minutes
+                                 else 0,
+                                 id_user_id=user_do_exist.id_user)
+        else:
+            user_created = await UserDB.create(username_user=input_token.username)
+            await TokenDB.create(creation_date_token=token.creation_date,
+                                 duration_token=input_token.token_minutes, id_user_id=user_created.id_user)
         return token
     else:
         response.status_code = status.HTTP_409_CONFLICT

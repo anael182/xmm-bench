@@ -94,7 +94,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
 
     const fetchBoards = async (): Promise<void> => {
         const resultBoardList = await axios(process.env.React_App_URL_API + "board-list");
-        if (! resultBoardList.data) {
+        if (!resultBoardList.data) {
             return;
         }
         let newBoardStatus = [] as Board[];
@@ -102,7 +102,10 @@ export default function TakeToken(props: LoginProps): ReactElement {
             let status = await axios.get("http://" + boardUrl + "reservation/state");
             let name = await axios.get("http://" + boardUrl + "board");
 
-            newBoardStatus.push({board_name: name.data.board_name, board_status: (status.data == null)? "Free": status.data.username}            );
+            newBoardStatus.push({
+                board_name: name.data.board_name,
+                board_status: (status.data == null) ? "Free" : status.data.username
+            });
         }
         setBoardStatus(newBoardStatus);
     }
@@ -184,7 +187,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
         <Grid container direction="column" justifyContent="center" alignItems="center" className={classes.root}>
             < Box className={classes.queueContainer}>
                 <Typography variant="h6" gutterBottom component="div">Boards status:</Typography>
-                {boardStatus && boardStatus.length > 1
+                {boardStatus && boardStatus.length >= 1
                     ? boardStatus.map(board =>
                         <div key={board.board_name} className={classes.queueDiv}>
                             {board.board_name} -- {board.board_status}
