@@ -170,7 +170,6 @@ export default function TakeToken(props: LoginProps): ReactElement {
             fetchBoards();
             fetchUser();
             fetchQueue();
-            console.log(boardStatus);
         }
         // eslint-disable-next-line
         , [refresh]

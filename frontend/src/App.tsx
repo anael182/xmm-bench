@@ -23,8 +23,8 @@ export default function App(): ReactElement {
 
     const classes = useStyles();
 
-    const [connect, setConnect] = useState<any>(null)
-    const [loading, setLoading] = useState(true);
+    const [connect, setConnect] = useState<Object | null>(null)
+    const [loading, setLoading] = useState<boolean>(true);
 
     const backendConnected = async (): Promise<void> => {
         const result = await axios(process.env.React_App_URL_API + "board");

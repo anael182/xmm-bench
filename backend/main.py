@@ -139,7 +139,10 @@ async def check_token_expiration(force_release=False):
             take_token(token_input)
 
 
+# Attempt to add time ellapsed during Exception to Token duration field into the DB
+# TODO Find a solution to add time ellapsed during Exception to Token duration field into the DB
 async def background_task():
+    time = 0
     while True:
         try:
             await asyncio.sleep(1)
@@ -148,6 +151,8 @@ async def background_task():
             raise
         except Exception as e:
             print("Oops! Something went wrong. %r" % e)
+            time += 1
+            print(time)
 
 
 #
@@ -252,24 +257,25 @@ queue = deque()
 #
 
 
-# Il reste a ajouter le gestion du cas du duration_token qui est null
 @app.post("/reservation/take")
 async def create_access_token(input_token: InputToken, response: Response):
     global token
     if token is None:
         take_token(input_token)
-        check_user_exists = await UserDB.filter(username_user=input_token.username).exists()
+        check_user_exists = await UserTable.filter(username_user=input_token.username).exists()
         print(input_token.token_minutes)
         if (check_user_exists):
-            user_do_exist = await UserDB_Pydantic.from_queryset_single(UserDB.get(username_user=input_token.username))
-            await TokenDB.create(creation_date_token=token.creation_date,
-                                 duration_token=input_token.token_minutes if input_token.token_minutes
-                                 else 0,
-                                 id_user_id=user_do_exist.id_user)
+            # TODO Need to edit redundant code below
+            user_do_exist = await UserDB_Pydantic.from_queryset_single(
+                UserTable.get(username_user=input_token.username))
+            await TokenTable.create(creation_date_token=token.creation_date,
+                                    duration_token=input_token.token_minutes if input_token.token_minutes
+                                    else 0,
+                                    id_user_id=user_do_exist.id_user)
         else:
-            user_created = await UserDB.create(username_user=input_token.username)
-            await TokenDB.create(creation_date_token=token.creation_date,
-                                 duration_token=input_token.token_minutes, id_user_id=user_created.id_user)
+            user_created = await UserTable.create(username_user=input_token.username)
+            await TokenTable.create(creation_date_token=token.creation_date,
+                                    duration_token=input_token.token_minutes, id_user_id=user_created.id_user)
         return token
     else:
         response.status_code = status.HTTP_409_CONFLICT
@@ -287,6 +293,7 @@ async def release_token(response: Response):
         return StatusResponse(message="Token is already free", status=False)
     else:
         print("Last user => " + token.username)
+        # TODO Need to substract remaining token time in the token duration field (tokenDB)
         await check_token_expiration(force_release=True)
         return StatusResponse(message="Token released", status=True)
 
@@ -296,6 +303,9 @@ async def token_state():
     global token
     return token
 
+
+# Queue management
+# TODO Add persistence for the queue
 
 @app.post("/reservation/queue/join")
 async def queue_management_add(input_token: InputToken):
@@ -324,6 +334,9 @@ async def get_queue():
     return QueueResponse(queue=list(queue))
 
 
+# Board Name and board list management
+
+
 @app.get("/board")
 async def get_board():
     if os.getenv("BOARD_NAME") is not None:
@@ -340,9 +353,7 @@ async def get_board_list():
         return {"board_list": None}
 
 
-#
 # Startup
-#
 
 
 @app.on_event("startup")
