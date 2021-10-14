@@ -17,6 +17,7 @@ class UserTable(models.Model):
 class TokenTable(models.Model):
     id_token = fields.IntField(pk=True)
     creation_date_token = fields.DatetimeField(max_length=50, auto_now_add=True, nullable=False)
+    # TODO Nullable=True seems to not works, so I just replaced it by 0 into the DB
     duration_token = fields.IntField(max_length=5, nullable=True)
     id_user = fields.ForeignKeyField("models.UserTable", related_name="token_user")
 

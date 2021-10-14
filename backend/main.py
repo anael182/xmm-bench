@@ -160,8 +160,6 @@ async def background_task():
 #
 
 async def async_stream(stream):
-    import asyncio
-
     cap = stream.video_capture
     fd = cap.device.fileno()
     loop = asyncio.get_event_loop()
@@ -263,19 +261,14 @@ async def create_access_token(input_token: InputToken, response: Response):
     if token is None:
         take_token(input_token)
         check_user_exists = await UserTable.filter(username_user=input_token.username).exists()
-        print(input_token.token_minutes)
         if (check_user_exists):
-            # TODO Need to edit redundant code below
-            user_do_exist = await UserDB_Pydantic.from_queryset_single(
+            user_do_exist = await UserTable_Pydantic.from_queryset_single(
                 UserTable.get(username_user=input_token.username))
-            await TokenTable.create(creation_date_token=token.creation_date,
-                                    duration_token=input_token.token_minutes if input_token.token_minutes
-                                    else 0,
-                                    id_user_id=user_do_exist.id_user)
         else:
             user_created = await UserTable.create(username_user=input_token.username)
-            await TokenTable.create(creation_date_token=token.creation_date,
-                                    duration_token=input_token.token_minutes, id_user_id=user_created.id_user)
+        await TokenTable.create(creation_date_token=token.creation_date,
+                                duration_token=input_token.token_minutes if input_token.token_minutes
+                                else 0, id_user_id=user_do_exist.id_user if check_user_exists else user_created.id_user)
         return token
     else:
         response.status_code = status.HTTP_409_CONFLICT
