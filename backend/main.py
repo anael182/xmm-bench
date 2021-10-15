@@ -140,7 +140,7 @@ async def check_token_expiration(force_release=False):
 
 
 # Attempt to add time ellapsed during Exception to Token duration field into the DB
-# TODO Find a solution to add time ellapsed during Exception to Token duration field into the DB
+# TODO Find a solution to add time ellapsed during Exception to Token duration field into the DB if the case is unlimited duration token
 async def background_task():
     time = 0
     while True:
@@ -153,6 +153,7 @@ async def background_task():
             print("Oops! Something went wrong. %r" % e)
             time += 1
             print(time)
+            user.connected.update()
 
 
 #
@@ -268,7 +269,8 @@ async def create_access_token(input_token: InputToken, response: Response):
             user_created = await UserTable.create(username_user=input_token.username)
         await TokenTable.create(creation_date_token=token.creation_date,
                                 duration_token=input_token.token_minutes if input_token.token_minutes
-                                else 0, id_user_id=user_do_exist.id_user if check_user_exists else user_created.id_user)
+                                else None,
+                                id_user_id=user_do_exist.id_user if check_user_exists else user_created.id_user)
         return token
     else:
         response.status_code = status.HTTP_409_CONFLICT
@@ -286,7 +288,7 @@ async def release_token(response: Response):
         return StatusResponse(message="Token is already free", status=False)
     else:
         print("Last user => " + token.username)
-        # TODO Need to substract remaining token time in the token duration field (tokenDB)
+        # TODO Need to substract remaining token time into the token duration field (tokenTable) to get reliable stats
         await check_token_expiration(force_release=True)
         return StatusResponse(message="Token released", status=True)
 
