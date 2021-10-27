@@ -145,7 +145,7 @@ export default function TakeToken(props: LoginProps): ReactElement {
     }
 
     const valueToHoursMinutes = (value: number | null): string => {
-        if (value != null) {
+        if (value) {
             let hours = Math.trunc(value / 60);
             let minutes = (value % 60).toString().padStart(2, "0");
             return `${hours}h${minutes}m`

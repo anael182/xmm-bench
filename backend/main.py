@@ -265,8 +265,10 @@ async def create_access_token(input_token: InputToken, response: Response):
         if (check_user_exists):
             user_do_exist = await UserTable_Pydantic.from_queryset_single(
                 UserTable.get(username_user=input_token.username))
+            print(f"User {user_do_exist.username_user} already exists in the database.")
         else:
             user_created = await UserTable.create(username_user=input_token.username)
+            print(f'User {user_created.username_user} created.')
         await TokenTable.create(creation_date_token=token.creation_date,
                                 duration_token=input_token.token_minutes if input_token.token_minutes
                                 else None,
