@@ -3,7 +3,7 @@ import TakeToken from "./TakeToken";
 import ReleaseToken from "./ReleaseToken";
 import axios from "axios";
 import {Alert} from "@material-ui/lab";
-import useInterval from "./utils/useInterval";
+import useInterval from "../utils/useInterval";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {Grid} from "@material-ui/core";
 import moment from 'moment';

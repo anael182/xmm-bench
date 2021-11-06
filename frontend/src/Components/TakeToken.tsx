@@ -7,7 +7,7 @@ import TextField from '@material-ui/core/TextField';
 import SliderDurationToken from "./SliderDurationToken";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
-import useInterval from "./utils/useInterval";
+import useInterval from "../utils/useInterval";
 
 
 // Material UI components CSS

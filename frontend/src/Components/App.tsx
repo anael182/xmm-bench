@@ -3,7 +3,7 @@ import RelayButtons from './RelayButtons';
 import Login from "./Login";
 import {ReactElement, useEffect, useState} from "react";
 import NavBar from "./NavBar"
-import InternalServerError from "./errorComponents/InternalServerError";
+import InternalServerError from "../errorComponents/InternalServerError";
 import axios from "axios";
 import CircularProgress from '@material-ui/core/CircularProgress';
 import {createStyles, makeStyles} from "@material-ui/core/styles";

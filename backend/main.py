@@ -309,7 +309,7 @@ async def queue_management_add(input_token: InputToken):
     global queue
     queue.append(input_token)
     return StatusResponse(
-        status=True, message=f"Joined queue at position {len(queue)}:"
+        status=True, message=f"Joined queue at position: {len(queue)}"
     )
 
 
